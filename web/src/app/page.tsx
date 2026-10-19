@@ -6,7 +6,7 @@ import { Brand } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-// Public, player- and affiliate-facing explainer (screens/how-it-works.html). Every number comes from settings.
+// Public, player- and affiliate-facing explainer (from the original how-it-works design). Every number comes from settings.
 
 function SectionTitle({ eyebrow, title, lead }: { eyebrow?: string; title: string; lead?: string }) {
   return (

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens taken from the mockups (screens/*.html). */
+/* Design tokens from the original Opengrowth designs. */
 @theme {
   --color-bg: #0a0a0b;
   --color-surface: #141416;

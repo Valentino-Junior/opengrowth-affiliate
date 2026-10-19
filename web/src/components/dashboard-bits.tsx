@@ -1,4 +1,4 @@
-// Pieces of the affiliate dashboard, matching screens/dashboard.html.
+// Pieces of the affiliate dashboard, matching the original dashboard design.
 
 import type { AffiliateWeek, Week } from "@prisma/client";
 import { formatCents, formatSignedCents } from "@/lib/money";

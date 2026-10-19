@@ -4,12 +4,7 @@ Affiliates bring in players and earn **5% of the weekly gross profit** those pla
 Desk employees log every deposit and cashout, a second employee verifies it, and ops pays everyone out each Monday.
 The top 3 affiliates each month also win a car, a dirt bike or an iPhone.
 
-This folder holds two things:
-
-| Folder / file | What it is |
-| --- | --- |
-| [`web/`](web/) | **The working app** (Next.js + PostgreSQL). This is what you run and deploy. |
-| [`screens/`](screens/) and `opengrowth-affiliate-system.html` | The original static design mockups the app was built from. |
+The app lives in [`web/`](web/) (Next.js + PostgreSQL). That's what you run and deploy.
 
 ---
 
@@ -56,7 +51,7 @@ cp .env.example .env
 
 ```sh
 npm run db:deploy     # creates every table and the money-safety rules in the database
-npm run db:seed       # loads sample affiliates, players and 6 weeks of history (matches the mockups)
+npm run db:seed       # loads sample affiliates, players and 6 weeks of history (matches the original designs)
 ```
 
 > `db:seed` **wipes the database** and reloads the sample data. Run it again any time you want a clean start.
@@ -97,7 +92,7 @@ Every sample account uses the password **`opengrowth`**. Log in at http://localh
 2. **Desk employee** (`a2@`): on the Transaction desk, confirm `player22`, then press **Verify** on `player07`'s $200 deposit, tick the box, verify.
    Log back in as `affiliate01@`: "This week so far" went up to $81.00.
 3. **Desk employee** (`a1@`): log a deposit with any PNG/JPG screenshot. You can't verify your own entry; it waits for a teammate.
-4. **Ops** (`ops@`): Payout run → **Close week now**. The table matches the mockup ($377.00 ready to pay).
+4. **Ops** (`ops@`): Payout run → **Close week now**. The table shows $377.00 ready to pay.
    Try **Mark paid**, **Review** on Affiliate 05 (clear the flag) and **Export payout list**.
 5. **Ops**: Verification → review Affiliate 06's ID, and release September's prize to Affiliate 02.
 6. **Ops**: Affiliates and players → approve "Jordan Newcomer", or register a new affiliate.
@@ -170,7 +165,7 @@ All amounts (rate, minimum, ID threshold, badges, prizes, group chat link) are e
 | `prisma/schema.prisma` | All database tables. Money is stored as whole cents. |
 | `prisma/migrations/` | Table changes, including the database-level safety rules. |
 | `prisma/seed.ts` | The sample data (closes and pays past weeks with the real payout engine). |
-| `src/lib/commission.ts` | The weekly commission math (unit-tested against the mockup numbers). |
+| `src/lib/commission.ts` | The weekly commission math (unit-tested against the original design's numbers). |
 | `src/lib/payouts.ts` | Weekly close, held payouts (flag / ID), Mark paid, CSV export. |
 | `src/lib/transactions.ts` | Log, verify, reject and edit deposits and cashouts. |
 | `src/lib/people.ts` | Affiliate and player signup, uniqueness checks, self-referral flags. |
@@ -186,9 +181,3 @@ All amounts (rate, minimum, ID threshold, badges, prizes, group chat link) are e
 - Email and SMS one-time codes, and two-factor login for staff (needs Twilio and Resend accounts). Until then, email and phone are checked for duplicates but not proven to belong to the person.
 - Re-ranking a race month that was already settled if a winner is disqualified afterwards (ops handles it by hand).
 
-## Original design mockups
-
-Static HTML in `screens/` (all names and numbers are sample data):
-`dashboard.html` (affiliate), `how-it-works.html` (public), `ops-payout-run.html` (management), `transaction-desk.html` (employees).
-`opengrowth-affiliate-system.html` has all four on one page. Open any of them directly in a browser
-(fonts load from Google Fonts: Bodoni Moda for headings, Manrope for body text).
