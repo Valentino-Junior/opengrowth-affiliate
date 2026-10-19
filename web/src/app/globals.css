@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* Design tokens taken from the mockups (screens/*.html). */
+@theme {
+  --color-bg: #0a0a0b;
+  --color-surface: #141416;
+  --color-surface-gold: #15130d;
+  --color-surface-green: #0f1a15;
+  --color-line: #26262a;
+  --color-line-soft: #1e1e22;
+  --color-line-gold: #3a3320;
+  --color-line-green: #1e3a2e;
+  --color-ink: #f2f0ea;
+  --color-ink-soft: #d6d6da;
+  --color-muted: #a8a8ae;
+  --color-gold: #d4af5a;
+  --color-green: #3cc795;
+  --color-green-bright: #5fe0b0;
+  --color-orange: #f0a06a;
+  --color-red: #ef6b6b;
+
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-serif: var(--font-bodoni), Georgia, serif;
+
+  --radius-card: 14px;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

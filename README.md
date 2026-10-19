@@ -1,0 +1,194 @@
+# Opengrowth by Young Money — Affiliate System
+
+Affiliates bring in players and earn **5% of the weekly gross profit** those players generate (verified deposits − verified cashouts).
+Desk employees log every deposit and cashout, a second employee verifies it, and ops pays everyone out each Monday.
+The top 3 affiliates each month also win a car, a dirt bike or an iPhone.
+
+This folder holds two things:
+
+| Folder / file | What it is |
+| --- | --- |
+| [`web/`](web/) | **The working app** (Next.js + PostgreSQL). This is what you run and deploy. |
+| [`screens/`](screens/) and `opengrowth-affiliate-system.html` | The original static design mockups the app was built from. |
+
+---
+
+## Run the project on your computer
+
+These steps take about 10 minutes the first time. Commands are for Ubuntu/Linux; macOS notes are in brackets.
+
+### 1. Install the tools (once)
+
+| Tool | Version | Check with |
+| --- | --- | --- |
+| Node.js | 22 or newer | `node -v` |
+| PostgreSQL | 16 | `psql --version` |
+
+```sh
+# Node.js 22 (Ubuntu)            [macOS: brew install node@22]
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# PostgreSQL 16 (Ubuntu)         [macOS: brew install postgresql@16 && brew services start postgresql@16]
+sudo apt-get install -y postgresql
+```
+
+### 2. Create the database (once)
+
+```sh
+sudo -u postgres psql -c "CREATE USER opengrowth WITH PASSWORD 'opengrowth' CREATEDB;"
+sudo -u postgres createdb -O opengrowth opengrowth_affiliate
+```
+
+[macOS with Homebrew: run the same two commands without `sudo -u postgres`.]
+
+### 3. Install the app and its settings (once)
+
+```sh
+cd web
+npm install
+cp .env.example .env
+```
+
+`.env` already points at the database from step 2. Only edit it if you used a different user, password or database name.
+
+### 4. Create the tables and load sample data
+
+```sh
+npm run db:deploy     # creates every table and the money-safety rules in the database
+npm run db:seed       # loads sample affiliates, players and 6 weeks of history (matches the mockups)
+```
+
+> `db:seed` **wipes the database** and reloads the sample data. Run it again any time you want a clean start.
+
+### 5. Start the app
+
+```sh
+npm run dev
+```
+
+Open **http://localhost:3000**. Leave this terminal running; press `Ctrl+C` to stop.
+
+### 6. Start the background worker (optional, second terminal)
+
+```sh
+cd web
+npm run worker
+```
+
+The worker closes each week after Sunday 23:59 (New York time) and settles each month's Top 3 race.
+You don't need it to try things out: ops can press **Close week now** on the payout run page.
+
+### 7. Log in
+
+Every sample account uses the password **`opengrowth`**. Log in at http://localhost:3000/login.
+
+| Role | Email | Where you land |
+| --- | --- | --- |
+| Admin (owner) | `admin@opengrowth.local` | Settings |
+| Ops manager | `ops@opengrowth.local` | Monday payout run |
+| Desk employees | `a1@opengrowth.local`, `a2@opengrowth.local`, `a3@opengrowth.local` | Transaction desk |
+| Affiliates | `affiliate01@opengrowth.local` … `affiliate06@opengrowth.local` | Affiliate dashboard |
+| New signup waiting for approval | `newcomer@example.com` | Dashboard (pending) |
+
+### 8. A 10-minute tour
+
+1. **Affiliate** (`affiliate01@`): dashboard with this week's $71.00, payout history, the Top 3 race (you're #4) and your referral code.
+2. **Desk employee** (`a2@`): on the Transaction desk, confirm `player22`, then press **Verify** on `player07`'s $200 deposit, tick the box, verify.
+   Log back in as `affiliate01@`: "This week so far" went up to $81.00.
+3. **Desk employee** (`a1@`): log a deposit with any PNG/JPG screenshot. You can't verify your own entry; it waits for a teammate.
+4. **Ops** (`ops@`): Payout run → **Close week now**. The table matches the mockup ($377.00 ready to pay).
+   Try **Mark paid**, **Review** on Affiliate 05 (clear the flag) and **Export payout list**.
+5. **Ops**: Verification → review Affiliate 06's ID, and release September's prize to Affiliate 02.
+6. **Ops**: Affiliates and players → approve "Jordan Newcomer", or register a new affiliate.
+7. **Admin** (`admin@`): Settings → change the minimum payout; the public page at http://localhost:3000 updates.
+8. **Anyone**: open http://localhost:3000/r/OG-A01 to sign up as a player through Affiliate 01's link.
+
+### Run it like production (faster, no hot reload)
+
+```sh
+npm run build
+npm start             # http://localhost:3000
+```
+
+### Run the tests
+
+```sh
+npm test                                   # 21 rule tests: commission, carry-forward, weeks, money
+npm run build && npm start                 # in one terminal, then in another:
+PW_CHANNEL=chrome npm run test:e2e         # 40 browser tests (uses your installed Google Chrome)
+```
+
+The browser tests reload the sample data first, so anything you changed by hand is reset.
+No Chrome? Run `npx playwright install chromium` once and drop `PW_CHANNEL=chrome`.
+
+### If something goes wrong
+
+| Problem | Fix |
+| --- | --- |
+| `password authentication failed` or `Can't reach database server` | PostgreSQL isn't running (`sudo systemctl start postgresql`) or `DATABASE_URL` in `web/.env` doesn't match step 2. |
+| `Port 3000 is already in use` | Another copy is running. Stop it, or run on another port: `npx next dev -p 3001`. |
+| `@prisma/client did not initialize yet` | Run `npx prisma generate` inside `web/`. |
+| Fonts fail to download during `npm run build` | The build fetches the two Google Fonts once; it needs an internet connection. |
+| Want a completely clean database | `npm run db:seed` (sample data) |
+
+---
+
+## Put it online
+
+[`web/DEPLOY.md`](web/DEPLOY.md) walks through hosting on **one Hostinger VPS** with Docker:
+PostgreSQL, the app, the worker and Caddy (automatic HTTPS), plus nightly backups and switching uploads to AWS S3.
+On a real server you create real staff accounts with `npm run create-staff`; the sample data refuses to load in production.
+
+---
+
+## How the business rules work
+
+| Rule | In the app |
+| --- | --- |
+| **Commission** | 5% of net, never below $0. Net = this week's gross profit + any carried loss. |
+| **Gross profit** | Verified deposits − verified cashouts, from referred players only. The affiliate's own play never counts. |
+| **Week** | Monday 00:00 to Sunday 23:59, New York time. Paid the following Monday. |
+| **Losing week** | Pays $0; the loss carries forward against future winning weeks and never resets. |
+| **Minimum payout** | $10. Smaller amounts roll into the next payout. |
+| **One person, one account** | Email and phone are unique across all affiliates and players. |
+| **Self-referral flag** | A player whose email, phone or payment handle matches their affiliate's goes to ops for review. |
+| **Two-person rule** | A second employee verifies every entry; nobody can verify their own (enforced by the database). Rejections need a reason. Only ops edits a verified entry, and the old values are kept. |
+| **ID check** | Required before any payout over $500 and before any Top 3 prize. The name on the ID must match the account. |
+| **Top 3 race** | Calendar month, ranked by gross profit. A flagged affiliate's prize is on hold; a disqualified one drops out and the next moves up. |
+| **Status badges** | Recognition only, from last month's paid earnings: Builder $0 · Hustler $50 · Playmaker $150 · Contender $300 · Heavy Hitter $600 · Kingpin $1,000 · OG Status $2,000+. |
+| **Signup** | Self-serve at `/join`; ops approves and the OG code is issued. Ops can also register affiliates directly. |
+
+All amounts (rate, minimum, ID threshold, badges, prizes, group chat link) are editable by the admin under **Settings**.
+
+---
+
+## Where things live in `web/`
+
+| Path | What |
+| --- | --- |
+| `prisma/schema.prisma` | All database tables. Money is stored as whole cents. |
+| `prisma/migrations/` | Table changes, including the database-level safety rules. |
+| `prisma/seed.ts` | The sample data (closes and pays past weeks with the real payout engine). |
+| `src/lib/commission.ts` | The weekly commission math (unit-tested against the mockup numbers). |
+| `src/lib/payouts.ts` | Weekly close, held payouts (flag / ID), Mark paid, CSV export. |
+| `src/lib/transactions.ts` | Log, verify, reject and edit deposits and cashouts. |
+| `src/lib/people.ts` | Affiliate and player signup, uniqueness checks, self-referral flags. |
+| `src/lib/race.ts` | Monthly Top 3 standings and prizes. |
+| `src/lib/identity.ts` | ID upload and review. |
+| `src/lib/storage.ts` | Private uploads: local disk or S3. |
+| `src/app/` | The screens: `dashboard/` (affiliates), `desk/` (employees), `ops/` (management), `admin/`, and the public pages. |
+| `scripts/worker.ts` | The background job (weekly close, race settle, cleanup). |
+| `e2e/` | Browser tests. |
+
+## Not built yet
+
+- Email and SMS one-time codes, and two-factor login for staff (needs Twilio and Resend accounts). Until then, email and phone are checked for duplicates but not proven to belong to the person.
+- Re-ranking a race month that was already settled if a winner is disqualified afterwards (ops handles it by hand).
+
+## Original design mockups
+
+Static HTML in `screens/` (all names and numbers are sample data):
+`dashboard.html` (affiliate), `how-it-works.html` (public), `ops-payout-run.html` (management), `transaction-desk.html` (employees).
+`opengrowth-affiliate-system.html` has all four on one page. Open any of them directly in a browser
+(fonts load from Google Fonts: Bodoni Moda for headings, Manrope for body text).

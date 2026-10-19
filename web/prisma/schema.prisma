@@ -1,0 +1,446 @@
+// Opengrowth affiliate system — database schema.
+// Money is always integer cents (BigInt). Table names are snake_case in Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum Role {
+  affiliate
+  employee
+  ops
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  inactive
+}
+
+enum ContactKind {
+  email
+  phone
+  payment_handle
+}
+
+enum OwnerType {
+  affiliate
+  player
+}
+
+enum PaymentMethod {
+  cash_app
+  chime
+  apple_pay
+  venmo
+  google_pay
+  paypal
+  crypto
+}
+
+enum IdStatus {
+  none
+  submitted
+  verified
+  rejected
+}
+
+enum AffiliateStatus {
+  pending_approval
+  active
+  inactive
+  flagged
+  disqualified
+}
+
+enum IdDocStatus {
+  submitted
+  approved
+  rejected
+}
+
+enum LinkSource {
+  link
+  code_at_desk
+  ops_tag
+}
+
+enum LinkStatus {
+  pending
+  confirmed
+  rejected
+  sent_to_ops
+}
+
+enum TxType {
+  deposit
+  cashout
+}
+
+enum TxStatus {
+  pending
+  verified
+  rejected
+}
+
+enum WeekStatus {
+  open
+  closed
+  paid
+}
+
+enum AffiliateWeekStatus {
+  ready
+  carried
+  under_minimum
+  flagged
+  needs_id
+  paid
+}
+
+enum RaceStatus {
+  live
+  closed
+  prizes_released
+}
+
+enum PrizeStatus {
+  awaiting_id
+  on_hold
+  released
+}
+
+enum FlagReason {
+  email_match
+  phone_match
+  payment_handle_match
+  duplicate_account
+  other
+}
+
+enum FlagStatus {
+  open
+  cleared
+  disqualified
+}
+
+// ---------- People and access ----------
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique
+  phone           String     @unique
+  passwordHash    String?    @map("password_hash")
+  role            Role
+  emailVerifiedAt DateTime?  @map("email_verified_at") @db.Timestamptz
+  phoneVerifiedAt DateTime?  @map("phone_verified_at") @db.Timestamptz
+  status          UserStatus @default(active)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  affiliate Affiliate?
+  staff     Staff?
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique @map("token_hash")
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Enforces "email and phone unique across all affiliates and players".
+/// A partial unique index (see migration) covers email + phone; payment handles may repeat and are flagged instead.
+model ContactRegistry {
+  id              String      @id @default(uuid()) @db.Uuid
+  kind            ContactKind
+  valueNormalized String      @map("value_normalized")
+  ownerType       OwnerType   @map("owner_type")
+  ownerId         String      @map("owner_id") @db.Uuid
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([kind, valueNormalized])
+  @@map("contact_registry")
+}
+
+model Affiliate {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @unique @map("user_id") @db.Uuid
+  legalName         String          @map("legal_name")
+  referralCode      String?         @unique @map("referral_code")
+  payoutMethod      PaymentMethod?  @map("payout_method")
+  payoutHandle      String?         @map("payout_handle")
+  idStatus          IdStatus        @default(none) @map("id_status")
+  carryForwardCents BigInt          @default(0) @map("carry_forward_cents")
+  status            AffiliateStatus @default(pending_approval)
+  legacyBuilder     Boolean         @default(false) @map("legacy_builder")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  user           User            @relation(fields: [userId], references: [id])
+  players        Player[]
+  transactions   Transaction[]
+  idDocuments    IdDocument[]
+  affiliateWeeks AffiliateWeek[]
+  raceResults    RaceResult[]
+  flags          Flag[]
+
+  @@map("affiliates")
+}
+
+model Staff {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @map("user_id") @db.Uuid
+  displayName String   @map("display_name")
+  displayCode String   @unique @map("display_code")
+  team        String
+  shiftStart  String?  @map("shift_start") // "08:00"
+  shiftEnd    String?  @map("shift_end") // "16:00"
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("staff")
+}
+
+model IdDocument {
+  id           String      @id @default(uuid()) @db.Uuid
+  affiliateId  String      @map("affiliate_id") @db.Uuid
+  frontKey     String      @map("front_key")
+  selfieKey    String      @map("selfie_key")
+  nameOnId     String      @map("name_on_id")
+  status       IdDocStatus @default(submitted)
+  reviewedBy   String?     @map("reviewed_by") @db.Uuid
+  rejectReason String?     @map("reject_reason")
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
+
+  @@index([affiliateId])
+  @@map("id_documents")
+}
+
+// ---------- Players and money ----------
+
+model Player {
+  id              String     @id @default(uuid()) @db.Uuid
+  handle          String     @unique
+  email           String?
+  phone           String?
+  paymentHandle   String?    @map("payment_handle")
+  affiliateId     String?    @map("affiliate_id") @db.Uuid
+  linkSource      LinkSource? @map("link_source")
+  linkStatus      LinkStatus @default(pending) @map("link_status")
+  linkConfirmedBy String?    @map("link_confirmed_by") @db.Uuid
+  linkConfirmedAt DateTime?  @map("link_confirmed_at") @db.Timestamptz
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  affiliate    Affiliate?    @relation(fields: [affiliateId], references: [id])
+  transactions Transaction[]
+  flags        Flag[]
+
+  @@index([affiliateId])
+  @@map("players")
+}
+
+/// The source of every money number. Counts only once status = verified.
+/// DB check constraints (see migration): amount_cents > 0, verified_by <> entered_by.
+model Transaction {
+  id            String        @id @default(uuid()) @db.Uuid
+  playerId      String        @map("player_id") @db.Uuid
+  affiliateId   String?       @map("affiliate_id") @db.Uuid
+  type          TxType
+  amountCents   BigInt        @map("amount_cents")
+  method        PaymentMethod
+  externalRef   String        @map("external_ref")
+  screenshotKey String        @map("screenshot_key")
+  occurredAt    DateTime      @map("occurred_at") @db.Timestamptz
+  status        TxStatus      @default(pending)
+  enteredBy     String        @map("entered_by") @db.Uuid
+  verifiedBy    String?       @map("verified_by") @db.Uuid
+  verifiedAt    DateTime?     @map("verified_at") @db.Timestamptz
+  rejectReason  String?       @map("reject_reason")
+  weekId        String?       @map("week_id") @db.Uuid
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  player    Player            @relation(fields: [playerId], references: [id])
+  affiliate Affiliate?        @relation(fields: [affiliateId], references: [id])
+  week      Week?             @relation(fields: [weekId], references: [id])
+  edits     TransactionEdit[]
+
+  @@index([method, externalRef]) // unique while not rejected: partial index in migration
+  @@index([status])
+  @@index([affiliateId, occurredAt])
+  @@map("transactions")
+}
+
+model TransactionEdit {
+  id            String   @id @default(uuid()) @db.Uuid
+  transactionId String   @map("transaction_id") @db.Uuid
+  editedBy      String   @map("edited_by") @db.Uuid
+  before        Json
+  after         Json
+  reason        String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+
+  @@map("transaction_edits")
+}
+
+// ---------- Weeks, payouts and the race ----------
+
+model Week {
+  id               String     @id @default(uuid()) @db.Uuid
+  startsOn         DateTime   @unique @map("starts_on") @db.Date
+  endsOn           DateTime   @map("ends_on") @db.Date
+  payoutDate       DateTime   @map("payout_date") @db.Date
+  status           WeekStatus @default(open)
+  rateBp           Int?       @map("rate_bp") // 500 = 5%, frozen at close
+  minPayoutCents   BigInt?    @map("min_payout_cents")
+  idThresholdCents BigInt?    @map("id_threshold_cents")
+  closedAt         DateTime?  @map("closed_at") @db.Timestamptz
+  closedBy         String?    @map("closed_by") @db.Uuid // null = closed by the scheduled job
+  checklist        Json       @default("{}") // manual Monday checklist ticks
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  transactions   Transaction[]
+  affiliateWeeks AffiliateWeek[]
+
+  @@map("weeks")
+}
+
+model AffiliateWeek {
+  id               String              @id @default(uuid()) @db.Uuid
+  weekId           String              @map("week_id") @db.Uuid
+  affiliateId      String              @map("affiliate_id") @db.Uuid
+  playerCount      Int                 @default(0) @map("player_count")
+  depositsCents    BigInt              @default(0) @map("deposits_cents")
+  cashoutsCents    BigInt              @default(0) @map("cashouts_cents")
+  grossProfitCents BigInt              @default(0) @map("gross_profit_cents")
+  carryInCents     BigInt              @default(0) @map("carry_in_cents")
+  netCents         BigInt              @default(0) @map("net_cents")
+  commissionCents  BigInt              @default(0) @map("commission_cents")
+  rolledInCents    BigInt              @default(0) @map("rolled_in_cents")
+  payableCents     BigInt              @default(0) @map("payable_cents")
+  carryOutCents    BigInt              @default(0) @map("carry_out_cents")
+  status           AffiliateWeekStatus
+  paidAt           DateTime?           @map("paid_at") @db.Timestamptz
+  paidBy           String?             @map("paid_by") @db.Uuid
+  paymentRef       String?             @map("payment_ref")
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  week      Week      @relation(fields: [weekId], references: [id])
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
+
+  @@unique([weekId, affiliateId])
+  @@map("affiliate_weeks")
+}
+
+model RaceMonth {
+  id        String     @id @default(uuid()) @db.Uuid
+  month     DateTime   @unique @db.Date // first day of the month
+  status    RaceStatus @default(live)
+  prize1    String     @default("A car") @map("prize_1")
+  prize2    String     @default("A dirt bike") @map("prize_2")
+  prize3    String     @default("An iPhone") @map("prize_3")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  results RaceResult[]
+
+  @@map("race_months")
+}
+
+model RaceResult {
+  id               String       @id @default(uuid()) @db.Uuid
+  raceMonthId      String       @map("race_month_id") @db.Uuid
+  affiliateId      String       @map("affiliate_id") @db.Uuid
+  grossProfitCents BigInt       @map("gross_profit_cents")
+  rank             Int?
+  excludedReason   String?      @map("excluded_reason")
+  prizeStatus      PrizeStatus? @map("prize_status")
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  raceMonth RaceMonth @relation(fields: [raceMonthId], references: [id])
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
+
+  @@unique([raceMonthId, affiliateId])
+  @@map("race_results")
+}
+
+model Flag {
+  id          String     @id @default(uuid()) @db.Uuid
+  affiliateId String     @map("affiliate_id") @db.Uuid
+  playerId    String?    @map("player_id") @db.Uuid
+  reason      FlagReason
+  detail      String?
+  status      FlagStatus @default(open)
+  resolvedBy  String?    @map("resolved_by") @db.Uuid
+  resolvedAt  DateTime?  @map("resolved_at") @db.Timestamptz
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
+  player    Player?   @relation(fields: [playerId], references: [id])
+
+  @@index([status])
+  @@map("flags")
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id       String   @id @default(uuid()) @db.Uuid
+  actorId  String?  @map("actor_id") @db.Uuid
+  action   String
+  entity   String
+  entityId String?  @map("entity_id")
+  before   Json?
+  after    Json?
+  at       DateTime @default(now()) @db.Timestamptz
+
+  @@index([entity, entityId])
+  @@map("audit_log")
+}
+
+/// Fixed-window rate limits (login, signup). Kept in Postgres so limits survive restarts and work across processes.
+model RateLimit {
+  key         String   @id
+  windowStart DateTime @map("window_start") @db.Timestamptz
+  hits        Int
+
+  @@map("rate_limits")
+}

@@ -1,0 +1,77 @@
+# Production stack for one Hostinger VPS:  docker compose up -d --build
+#   db      PostgreSQL 16 (data in the pgdata volume; not reachable from the internet)
+#   app     the Next.js web app on :3000 (runs migrations on start)
+#   worker  closes weeks / settles race months every minute
+#   caddy   HTTPS on :80/:443 with automatic Let's Encrypt certificates
+# Settings come from .env (copy .env.production.example).
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: opengrowth
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: opengrowth
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opengrowth -d opengrowth"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    image: opengrowth-web
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://opengrowth:${POSTGRES_PASSWORD}@db:5432/opengrowth
+      STORAGE_DIR: /app/storage
+    volumes:
+      - uploads:/app/storage # used only when S3_BUCKET is empty
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    image: opengrowth-web
+    restart: unless-stopped
+    command: ["npx", "tsx", "scripts/worker.ts"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://opengrowth:${POSTGRES_PASSWORD}@db:5432/opengrowth
+      STORAGE_DIR: /app/storage
+    volumes:
+      - uploads:/app/storage
+    depends_on:
+      app:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

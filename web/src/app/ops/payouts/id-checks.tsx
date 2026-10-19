@@ -1,0 +1,88 @@
+import Link from "next/link";
+import { db } from "@/lib/db";
+import { formatCents } from "@/lib/money";
+import { monthLabel, prizeNames, standings } from "@/lib/race";
+import { localDay } from "@/lib/weeks";
+import { Card, Pill } from "@/components/ui";
+import { EmptyRow, Table, Td, Th } from "@/components/table";
+
+const PLACES = ["1st", "2nd", "3rd"];
+
+/** Who needs an ID check before money or a prize goes out: this month's top 3 + payouts held for ID. */
+export async function IdChecks({ weekId, thresholdCents }: { weekId: string; thresholdCents: bigint }) {
+  const month = `${localDay(new Date()).slice(0, 7)}-01`;
+  const [top, prizes, held] = await Promise.all([
+    standings(month).then((t) => t.slice(0, 3)),
+    prizeNames(),
+    db.affiliateWeek.findMany({ where: { weekId, status: "needs_id" }, include: { affiliate: true } }),
+  ]);
+  const ids = [...top.map((t) => t.affiliateId), ...held.map((h) => h.affiliateId)];
+  const affiliates = await db.affiliate.findMany({ where: { id: { in: ids } } });
+  const byId = new Map(affiliates.map((a) => [a.id, a]));
+
+  const rows = [
+    ...top.map((t, i) => ({ key: `race-${t.affiliateId}`, affiliateId: t.affiliateId, reason: `${monthLabel(month).split(" ")[0]} ${PLACES[i]} place: ${prizes[i].replace(/^an? /i, "")}` })),
+    ...held.map((h) => ({ key: `pay-${h.id}`, affiliateId: h.affiliateId, reason: `Payout of ${formatCents(h.payableCents)} (over ${formatCents(thresholdCents, { whole: true })})` })),
+  ];
+
+  return (
+    <Card aria-label="ID checks before release" className="flex flex-col gap-3 !px-0">
+      <div className="px-6">
+        <h2 className="m-0 text-xl font-extrabold">ID checks before release</h2>
+        <p className="m-0 mt-1 text-sm text-muted">
+          Required for any payout over {formatCents(thresholdCents, { whole: true })} and every Top 3 prize. Name on ID must match the account.
+        </p>
+      </div>
+      <Table>
+        <thead>
+          <tr>
+            <Th>Affiliate</Th>
+            <Th>Reason</Th>
+            <Th>Email</Th>
+            <Th>Phone</Th>
+            <Th>ID</Th>
+            <Th>Action</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? <EmptyRow cols={6}>Nobody needs an ID check right now.</EmptyRow> : null}
+          {rows.map((r) => {
+            const a = byId.get(r.affiliateId)!;
+            return (
+              <tr key={r.key}>
+                <Td className="font-semibold whitespace-nowrap">{a.legalName}</Td>
+                <Td>{r.reason}</Td>
+                {/* Email and phone are unique by construction (contact registry), so these always read Unique. */}
+                <Td>
+                  <Pill tone="green">Unique</Pill>
+                </Td>
+                <Td>
+                  <Pill tone="green">Unique</Pill>
+                </Td>
+                <Td>
+                  {a.status === "flagged" ? (
+                    <Pill tone="red">On hold: flagged</Pill>
+                  ) : a.idStatus === "verified" ? (
+                    <Pill tone="green">ID verified</Pill>
+                  ) : a.idStatus === "submitted" ? (
+                    <Pill tone="gold">ID sent, review it</Pill>
+                  ) : (
+                    <Pill tone="grey">Awaiting ID</Pill>
+                  )}
+                </Td>
+                <Td>
+                  {a.idStatus === "submitted" ? (
+                    <Link href="/ops/verification#ids" className="rounded-full bg-gold px-4 py-1.5 text-sm font-bold text-bg no-underline">
+                      Verify ID
+                    </Link>
+                  ) : null}
+                </Td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
+      <p className="m-0 px-6 text-xs text-muted">A flagged affiliate can&apos;t receive a prize until the flag is cleared. If they&apos;re disqualified, the next affiliate in line moves up.</p>
+    </Card>
+  );
+}
