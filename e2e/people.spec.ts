@@ -93,7 +93,7 @@ test("self-serve signup waits for approval, then gets a code", async ({ page }) 
   await page.getByLabel("Full legal name").fill("Casey Signup");
   await page.getByLabel("Email").fill("casey@example.com");
   await page.getByLabel("Phone number").fill("555-060-0001");
-  await page.getByLabel("Password").fill("casey-password");
+  await page.getByLabel("Password", { exact: true }).fill("casey-password");
   await page.getByLabel("Get paid by").selectOption("venmo");
   await page.getByLabel("Payout handle").fill("@casey");
   await page.getByRole("button", { name: "Create my account" }).click();

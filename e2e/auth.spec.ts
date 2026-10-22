@@ -8,7 +8,7 @@ const PASSWORD = "opengrowth";
 async function login(page: import("@playwright/test").Page, email: string) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
 }
 
@@ -35,7 +35,7 @@ test("logged-out visitors are sent to login", async ({ page }) => {
 test("wrong password shows an error", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("ops@opengrowth.local");
-  await page.getByLabel("Password").fill("nope");
+  await page.getByLabel("Password", { exact: true }).fill("nope");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.getByText("Email or password is wrong.")).toBeVisible();
 });

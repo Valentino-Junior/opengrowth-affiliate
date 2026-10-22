@@ -37,13 +37,13 @@ test("10 wrong passwords lock the email for 15 minutes, even with the right pass
   await page.goto("/login");
   for (let i = 0; i < 10; i++) {
     await page.getByLabel("Email").fill("affiliate03@opengrowth.local");
-    await page.getByLabel("Password").fill(`wrong-${i}`);
+    await page.getByLabel("Password", { exact: true }).fill(`wrong-${i}`);
     // Wait for each attempt to reach the server before the next one.
     await Promise.all([page.waitForResponse((r) => r.request().method() === "POST"), page.getByRole("button", { name: "Log in" }).click()]);
     await expect(page.getByText("Email or password is wrong.")).toBeVisible();
   }
   await page.getByLabel("Email").fill("affiliate03@opengrowth.local");
-  await page.getByLabel("Password").fill("opengrowth");
+  await page.getByLabel("Password", { exact: true }).fill("opengrowth");
   await Promise.all([page.waitForResponse((r) => r.request().method() === "POST"), page.getByRole("button", { name: "Log in" }).click()]);
   await expect(page.getByText("Too many attempts. Wait 15 minutes and try again.")).toBeVisible();
   await expect(page).toHaveURL("/login");
@@ -59,7 +59,7 @@ test("centred footer with the current year on public, login and signed-in pages"
   }
   await page.goto("/login");
   await page.getByLabel("Email").fill("affiliate02@opengrowth.local");
-  await page.getByLabel("Password").fill("opengrowth");
+  await page.getByLabel("Password", { exact: true }).fill("opengrowth");
   await page.getByRole("button", { name: "Log in" }).click();
   await page.waitForURL("/dashboard");
   await expect(page.getByRole("contentinfo").getByText(`© ${year}`)).toBeVisible();
