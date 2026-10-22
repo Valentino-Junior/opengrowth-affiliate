@@ -3,10 +3,10 @@ import { Pill } from "./ui";
 
 // One wording for ID status everywhere. "affiliate" talks to the person; "ops" talks about them.
 
-const LABELS: Record<"affiliate" | "ops", Record<IdStatus, { label: string; tone: "gold" | "grey" | "green" | "orange" }>> = {
+const LABELS: Record<"affiliate" | "ops", Record<IdStatus, { label: string; tone: "gold" | "grey" | "green" | "orange" | "blue"; pulse?: boolean }>> = {
   affiliate: {
     none: { label: "No ID uploaded yet", tone: "gold" },
-    submitted: { label: "ID being checked", tone: "grey" },
+    submitted: { label: "ID being checked", tone: "blue", pulse: true },
     verified: { label: "ID verified", tone: "green" },
     rejected: { label: "ID rejected: upload again", tone: "orange" },
   },
@@ -19,10 +19,12 @@ const LABELS: Record<"affiliate" | "ops", Record<IdStatus, { label: string; tone
 };
 
 export function IdStatusPill({ status, audience = "affiliate" }: { status: IdStatus; audience?: "affiliate" | "ops" }) {
-  const { label, tone } = LABELS[audience][status];
+  const { label, tone, pulse } = LABELS[audience][status];
   return (
-    <span title="An ID check is needed before large payouts and any Top 3 prize.">
-      <Pill tone={tone}>{label}</Pill>
+    <span className="inline-flex" title="An ID check is needed before large payouts and any Top 3 prize.">
+      <Pill tone={tone} pulse={pulse}>
+        {label}
+      </Pill>
     </span>
   );
 }

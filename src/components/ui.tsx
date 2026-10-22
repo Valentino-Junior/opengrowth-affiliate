@@ -67,11 +67,14 @@ const pillTones = {
   orange: "border-orange/40 text-orange bg-orange/10",
   grey: "border-line text-muted bg-white/5",
   red: "border-red/40 text-red bg-red/10",
+  blue: "border-blue/40 text-blue bg-blue/10",
 };
 
-export function Pill({ tone, children }: { tone: keyof typeof pillTones; children: React.ReactNode }) {
+/** `pulse` adds a softly pulsing dot for "in progress" states (still when the person prefers reduced motion). */
+export function Pill({ tone, pulse = false, children }: { tone: keyof typeof pillTones; pulse?: boolean; children: React.ReactNode }) {
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${pillTones[tone]}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${pillTones[tone]}`}>
+      {pulse ? <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current motion-safe:animate-pulse" /> : null}
       {children}
     </span>
   );
