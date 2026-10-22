@@ -11,6 +11,7 @@ import { CopyCode } from "@/components/copy-code";
 import { EmailNotice } from "@/components/email-notice";
 import { MathStrip, PayoutHistory, PlayersTable, StatusBadge } from "@/components/dashboard-bits";
 import { Card, PageTitle, Pill, Stat } from "@/components/ui";
+import { IdStatusPill } from "@/components/id-status";
 
 /** "A car" → "a car", "An iPhone" → "an iPhone": prize names read mid-sentence. */
 const inSentence = (prize: string) => prize.replace(/^(A|An|The) /, (m) => m.toLowerCase());
@@ -59,12 +60,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const third = table[2];
   const gapTo3rd = me && third && me.rank > 3 ? third.grossCents - me.grossCents : null;
 
-  const idPill = {
-    none: <Pill tone="gold">ID not on file yet</Pill>,
-    submitted: <Pill tone="grey">ID under review</Pill>,
-    verified: <Pill tone="green">ID verified</Pill>,
-    rejected: <Pill tone="orange">ID rejected: upload again</Pill>,
-  }[affiliate.idStatus];
+  const idPill = <IdStatusPill status={affiliate.idStatus} />;
 
   return (
     <>
@@ -147,8 +143,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="flex flex-col gap-2">
           <h2 className="m-0 text-xl font-extrabold">Account verification</h2>
           <div className="flex flex-wrap gap-2">
-            <Pill tone={user.emailVerifiedAt ? "green" : "gold"}>{user.emailVerifiedAt ? "Email verified" : "Email not verified"}</Pill>
-            <Pill tone={user.phoneVerifiedAt ? "green" : "gold"}>{user.phoneVerifiedAt ? "Phone verified" : "Phone not verified"}</Pill>
+            <Pill tone={user.emailVerifiedAt ? "green" : "gold"}>{user.emailVerifiedAt ? "Email confirmed" : "Email not confirmed"}</Pill>
+            <Pill tone={user.phoneVerifiedAt ? "green" : "gold"}>{user.phoneVerifiedAt ? "Phone confirmed" : "Phone not confirmed"}</Pill>
             {idPill}
           </div>
           <span className="text-xs text-muted">Needed for payouts over {formatCents(settings.idThresholdCents, { whole: true })} and Top 3 prizes.</span>

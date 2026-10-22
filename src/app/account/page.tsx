@@ -9,6 +9,9 @@ import { Avatar, displayName } from "@/components/avatar";
 import { Field } from "@/components/field";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
+import { IdStatusPill } from "@/components/id-status";
+import { getSettings } from "@/lib/settings";
+import { formatCents } from "@/lib/money";
 
 export const metadata = { title: "My profile · Opengrowth" };
 
@@ -20,18 +23,13 @@ const STATUS = {
   flagged: { label: "Under review", tone: "orange" },
   disqualified: { label: "Disqualified", tone: "red" },
 } as const;
-const ID_STATUS = {
-  none: { label: "ID not on file", tone: "gold" },
-  submitted: { label: "ID under review", tone: "grey" },
-  verified: { label: "ID verified", tone: "green" },
-  rejected: { label: "ID rejected", tone: "orange" },
-} as const;
 
 const memberSince = (d: Date) => d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "America/New_York" });
 
 export default async function AccountPage() {
   const user = await requireRole(["affiliate", "employee", "ops", "admin"]);
   const a = user.affiliate;
+  const settings = await getSettings();
   const name = displayName(user);
   const nameLocked = !!a && (a.idStatus === "verified" || a.idStatus === "submitted");
 
@@ -46,7 +44,12 @@ export default async function AccountPage() {
             <h2 className="m-0 text-2xl font-extrabold">{name}</h2>
             <Pill tone="gold">{ROLE_LABEL[user.role]}</Pill>
             {a ? <Pill tone={STATUS[a.status].tone}>{STATUS[a.status].label}</Pill> : null}
-            {a ? <Pill tone={ID_STATUS[a.idStatus].tone}>{ID_STATUS[a.idStatus].label}</Pill> : null}
+            {a ? <IdStatusPill status={a.idStatus} /> : null}
+            {a && (a.idStatus === "none" || a.idStatus === "rejected") ? (
+              <Link href="/dashboard/verify" className="text-xs font-bold text-gold">
+                Upload your ID (needed for payouts over {formatCents(settings.idThresholdCents, { whole: true })} and prizes)
+              </Link>
+            ) : null}
           </div>
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr_auto_1fr]">
             <dt className="text-muted">Email</dt>

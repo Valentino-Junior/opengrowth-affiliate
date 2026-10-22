@@ -1,9 +1,4 @@
-import {
-  approveAffiliateAction,
-  declineAffiliateAction,
-  registerAffiliateAction,
-  tagPlayerAction,
-} from "@/app/actions/people";
+import { approveAffiliateAction, declineAffiliateAction, registerAffiliateAction, tagPlayerAction } from "@/app/actions/people";
 import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PAYMENT_METHODS, formatDateTime, methodLabel } from "@/lib/labels";
@@ -13,6 +8,7 @@ import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
+import { IdStatusPill } from "@/components/id-status";
 
 const statusTone = {
   pending_approval: "gold",
@@ -91,7 +87,9 @@ export default async function AffiliatesPage() {
                           <option key={r}>{r}</option>
                         ))}
                       </select>
-                      <SubmitButton variant="danger" className="!py-1.5">Decline</SubmitButton>
+                      <SubmitButton variant="danger" className="!py-1.5">
+                        Decline
+                      </SubmitButton>
                     </ActionForm>
                   </div>
                 </Td>
@@ -105,9 +103,7 @@ export default async function AffiliatesPage() {
         <Card id="register" className="flex flex-col gap-4">
           <div>
             <h2 className="m-0 text-xl font-extrabold">Register a new affiliate</h2>
-            <p className="m-0 mt-1 text-sm text-muted">
-              One person, one account. Email and phone are checked against every existing affiliate and player.
-            </p>
+            <p className="m-0 mt-1 text-sm text-muted">One person, one account. Email and phone are checked against every existing affiliate and player.</p>
           </div>
           <ActionForm action={registerAffiliateAction} resetOnSuccess className="flex flex-col gap-4">
             <Field label="Full legal name" name="legalName" required />
@@ -160,7 +156,9 @@ export default async function AffiliatesPage() {
                 <Td className="text-gold">{a.referralCode ?? "—"}</Td>
                 <Td>{a._count.players}</Td>
                 <Td>{methodLabel(a.payoutMethod)}</Td>
-                <Td>{a.idStatus === "verified" ? <Pill tone="green">Verified</Pill> : <Pill tone="grey">{a.idStatus}</Pill>}</Td>
+                <Td>
+                  <IdStatusPill status={a.idStatus} audience="ops" />
+                </Td>
                 <Td>
                   <Pill tone={statusTone[a.status]}>{a.status.replace("_", " ")}</Pill>
                 </Td>

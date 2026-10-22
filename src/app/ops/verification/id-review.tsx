@@ -8,6 +8,7 @@ import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
+import { IdStatusPill } from "@/components/id-status";
 
 const ID_REJECT_REASONS = ["Name doesn't match the account", "Photo unreadable or cut off", "ID expired", "Selfie doesn't match the ID", "Other"];
 
@@ -104,7 +105,9 @@ export async function PrizeRelease() {
     <Card id="prizes" className="flex flex-col gap-3 !px-0">
       <div className="px-6">
         <h2 className="m-0 text-xl font-extrabold">Top 3 prizes · {monthLabel(month)}</h2>
-        <p className="m-0 mt-1 text-sm text-muted">Release a prize only after the winner&apos;s ID is verified. A flagged winner waits until the flag is cleared.</p>
+        <p className="m-0 mt-1 text-sm text-muted">
+          Release a prize only after the winner&apos;s ID is verified. A flagged winner waits until the flag is cleared.
+        </p>
       </div>
       <Table>
         <thead>
@@ -128,7 +131,9 @@ export async function PrizeRelease() {
                 <Td className="font-semibold">{r.affiliate.legalName}</Td>
                 <Td className="text-right">{formatCents(r.grossProfitCents, { whole: true })}</Td>
                 <Td>{prizes[(r.rank ?? 1) - 1]}</Td>
-                <Td>{r.affiliate.idStatus === "verified" ? <Pill tone="green">ID verified</Pill> : <Pill tone="gold">Awaiting ID</Pill>}</Td>
+                <Td>
+                  <IdStatusPill status={r.affiliate.idStatus} audience="ops" />
+                </Td>
                 <Td>
                   {r.prizeStatus === "released" ? (
                     <Pill tone="green">Released</Pill>

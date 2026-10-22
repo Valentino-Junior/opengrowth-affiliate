@@ -5,6 +5,7 @@ import { monthLabel, prizeNames, standings } from "@/lib/race";
 import { localDay } from "@/lib/weeks";
 import { Card, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
+import { IdStatusPill } from "@/components/id-status";
 
 const PLACES = ["1st", "2nd", "3rd"];
 
@@ -63,12 +64,8 @@ export async function IdChecks({ weekId, thresholdCents }: { weekId: string; thr
                 <Td>
                   {a.status === "flagged" ? (
                     <Pill tone="red">On hold: flagged</Pill>
-                  ) : a.idStatus === "verified" ? (
-                    <Pill tone="green">ID verified</Pill>
-                  ) : a.idStatus === "submitted" ? (
-                    <Pill tone="gold">ID sent, review it</Pill>
                   ) : (
-                    <Pill tone="grey">Awaiting ID</Pill>
+                    <IdStatusPill status={a.idStatus} audience="ops" />
                   )}
                 </Td>
                 <Td>

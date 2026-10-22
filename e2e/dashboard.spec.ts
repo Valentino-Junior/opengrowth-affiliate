@@ -57,7 +57,7 @@ test("ID upload refuses a non-image, then goes to ops review", async ({ page }) 
   await page.getByLabel(/This is my own ID/).check();
   await page.getByRole("button", { name: "Send for review" }).click();
   await expect(page).toHaveURL(/\/dashboard\?id=submitted/);
-  await expect(page.getByText("ID under review")).toBeVisible();
+  await expect(page.getByText("ID being checked")).toBeVisible();
   await logout(page);
 
   await login(page, "ops@opengrowth.local");
