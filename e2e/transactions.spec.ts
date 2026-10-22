@@ -7,11 +7,20 @@ import { login, logout } from "./helpers";
 const receipt = path.join(__dirname, "fixtures/receipt.png");
 const fake = path.join(__dirname, "fixtures/fake.png");
 
+/** The player field is a button that opens a centred list; pick from it like a person would. */
+async function choosePlayer(page: Page, handle: string) {
+  await page.locator("#log").getByRole("button", { name: /^Player handle/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Choose a player" });
+  await dialog.getByLabel("Search players").fill(handle);
+  await dialog.getByRole("button", { name: new RegExp(`^${handle}\\b`) }).click();
+  await expect(dialog).toBeHidden();
+}
+
 async function logEntry(page: Page, e: { type?: "Deposit" | "Cashout"; handle: string; amount: string; method: string; ref: string; file?: string }) {
   if (!page.url().endsWith("/desk/log")) await page.goto("/desk/log");
   const form = page.locator("#log form");
   if (e.type === "Cashout") await form.getByText("Cashout", { exact: true }).click();
-  await form.getByLabel("Player handle").fill(e.handle);
+  await choosePlayer(page, e.handle);
   await form.getByLabel("Amount (USD)").fill(e.amount);
   await form.getByLabel("Payment method").selectOption({ label: e.method });
   await form.getByLabel("Transaction ID / reference").fill(e.ref);
@@ -83,7 +92,7 @@ test("a payment reference can't be logged twice; a non-image is refused", async 
   await expect(form.getByText("Payment screenshot must be a PNG, JPG or WebP image.")).toBeVisible();
 });
 
-test("money can't be logged for a player whose link isn't confirmed", async ({ page }) => {
+test("a player whose link isn't confirmed isn't offered for logging money", async ({ page }) => {
   await page.goto("/join/player?ref=OG-A04");
   await page.getByLabel("Player handle").fill("unconfirmed1");
   await page.getByLabel("Email").fill("unconfirmed1@example.com");
@@ -94,8 +103,14 @@ test("money can't be logged for a player whose link isn't confirmed", async ({ p
   await expect(page.getByText("You're in.")).toBeVisible();
 
   await login(page, "a1@opengrowth.local");
-  const form = await logEntry(page, { handle: "unconfirmed1", amount: "100", method: "Chime", ref: "CH-1" });
-  await expect(form.getByText("affiliate link isn't confirmed yet")).toBeVisible();
+  await page.goto("/desk/log");
+  await page.locator("#log").getByRole("button", { name: /^Player handle/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Choose a player" });
+  await dialog.getByLabel("Search players").fill("unconfirmed1");
+  await expect(dialog.getByText("No player matches “unconfirmed1”.")).toBeVisible();
+  // A confirmed player is offered.
+  await dialog.getByLabel("Search players").fill("player13");
+  await expect(dialog.getByRole("button", { name: /^player13\b/ })).toBeVisible();
 });
 
 test("only ops edits a verified entry, and the change is kept in history", async ({ page }) => {

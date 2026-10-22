@@ -7,9 +7,10 @@ import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card } from "@/components/ui";
 import { FileField } from "@/components/file-field";
+import { PlayerPicker } from "@/components/player-picker";
 
 export async function LogTransaction() {
-  // Suggestions for the player field: players whose link is settled (confirmed, or rejected = no affiliate).
+  // Players money can be logged for: link settled (confirmed, or rejected = no affiliate).
   const players = await db.player.findMany({
     where: { linkStatus: { in: ["confirmed", "rejected"] } },
     select: { handle: true, affiliate: { select: { legalName: true } }, linkStatus: true },
@@ -37,14 +38,11 @@ export async function LogTransaction() {
             ))}
           </div>
         </fieldset>
-        <Field label="Player handle" name="playerHandle" list="player-handles" autoComplete="off" required />
-        <datalist id="player-handles">
-          {players.map((p) => (
-            <option key={p.handle} value={p.handle}>
-              {p.linkStatus === "confirmed" ? p.affiliate?.legalName : "No affiliate"}
-            </option>
-          ))}
-        </datalist>
+        <PlayerPicker
+          label="Player handle"
+          name="playerHandle"
+          players={players.map((p) => ({ handle: p.handle, affiliate: p.linkStatus === "confirmed" ? (p.affiliate?.legalName ?? null) : null }))}
+        />
         <Field label="Amount (USD)" name="amount" inputMode="decimal" placeholder="200.00" required />
         <Select label="Payment method" name="method" options={PAYMENT_METHODS} placeholder="Choose…" required />
         <Field label="Transaction ID / reference" name="externalRef" autoComplete="off" required />
