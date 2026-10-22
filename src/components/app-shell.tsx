@@ -30,7 +30,7 @@ function navFor(area: Area, role: Role): NavItem[] {
         { href: "/desk", label: "Overview" },
         { href: "/desk/new-players", label: "New players" },
         { href: "/desk/log", label: "Log transaction" },
-        { href: "/desk/queue", label: "Verify queue" },
+        { href: "/desk/queue", label: "Verify queue", match: ["/desk/entries"] },
         ...(role === "employee" ? [] : [{ href: "/ops/payouts", label: "Payout run" }]),
       ];
     case "ops":

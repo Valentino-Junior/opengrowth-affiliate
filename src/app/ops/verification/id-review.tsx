@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Card, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
 import { IdStatusPill } from "@/components/id-status";
+import { ImageViewer } from "@/components/image-viewer";
 
 const ID_REJECT_REASONS = ["Name doesn't match the account", "Photo unreadable or cut off", "ID expired", "Selfie doesn't match the ID", "Other"];
 
@@ -16,10 +17,9 @@ const sameName = (a: string, b: string) => a.trim().toLowerCase().replace(/\s+/g
 
 function Thumb({ src, alt }: { src: string; alt: string }) {
   return (
-    <a href={src} target="_blank" rel="noreferrer">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="h-28 w-44 rounded-[8px] border border-line bg-bg object-cover" />
-    </a>
+    <div className="w-44">
+      <ImageViewer src={src} alt={alt} thumbClassName="h-28 w-44 rounded-[8px] border border-line bg-bg object-cover" />
+    </div>
   );
 }
 

@@ -13,6 +13,7 @@ import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle } from "@/components/ui";
 import { StatusPill } from "../../_components/verify-queue";
+import { ImageViewer } from "@/components/image-viewer";
 
 const REJECT_REASONS = ["Ref not found in the app", "Wrong amount", "Wrong payment method", "Wrong player", "Duplicate entry", "Screenshot doesn't match", "Other"];
 
@@ -69,15 +70,11 @@ export default async function EntryPage({ params }: { params: Promise<{ id: stri
       <div className="grid gap-7 lg:grid-cols-2">
         <Card className="flex flex-col gap-3">
           <h2 className="m-0 text-xl font-extrabold">Screenshot</h2>
-          <a href={fileUrl(entry.screenshotKey)} target="_blank" rel="noreferrer" className="block">
-            {/* Private file behind the role check in /api/files; not optimised by next/image on purpose. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={fileUrl(entry.screenshotKey)}
-              alt={`Payment screenshot for ${entry.player.handle}`}
-              className="max-h-[560px] w-full rounded-[10px] border border-line bg-bg object-contain"
-            />
-          </a>
+          <ImageViewer
+            src={fileUrl(entry.screenshotKey)}
+            alt={`Payment screenshot for ${entry.player.handle}`}
+            thumbClassName="max-h-[560px] w-full rounded-[10px] border border-line bg-bg object-contain"
+          />
           <span className="text-xs text-muted">Click to open full size.</span>
         </Card>
 

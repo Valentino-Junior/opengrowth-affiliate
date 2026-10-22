@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export type NavItem = { href: string; label: string };
+/** `match`: other pages that belong to this tab (e.g. an entry's page belongs to the Verify queue). */
+export type NavItem = { href: string; label: string; match?: string[] };
 
 export function NavLinks({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
-  // The active item is the longest href (without #hash) that the current path starts with.
+  // The active item is the one whose href (without #hash) or `match` prefix is the longest match for the current path.
   const active = items
-    .map((i) => i.href.split("#")[0])
-    .filter((p) => p !== "/" && (pathname === p || pathname.startsWith(`${p}/`)))
-    .sort((a, b) => b.length - a.length)[0];
+    .flatMap((i) => [i.href.split("#")[0], ...(i.match ?? [])].map((prefix) => ({ href: i.href, prefix })))
+    .filter(({ prefix }) => prefix !== "/" && (pathname === prefix || pathname.startsWith(`${prefix}/`)))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0]?.href;
 
   return (
     <nav aria-label="Main" className="flex gap-1 whitespace-nowrap lg:flex-wrap">
