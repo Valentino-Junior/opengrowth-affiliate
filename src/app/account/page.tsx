@@ -80,68 +80,71 @@ export default async function AccountPage() {
         </div>
       </Card>
 
-      <div className="grid items-start gap-7 lg:grid-cols-2">
-        <Card aria-label="Your name" className="flex flex-col gap-4">
-          <div>
-            <h2 className="m-0 text-xl font-extrabold">{a ? "Your legal name" : "Your name"}</h2>
-            <p className="m-0 mt-1 text-sm text-muted">
-              {nameLocked
-                ? "Locked: it must match your ID for payouts and prizes. Message the team if it needs to change."
-                : a
-                  ? "Must match your ID exactly, for payouts and prizes."
-                  : "Shown to your teammates on the desk and in the logs."}
-            </p>
-          </div>
-          <ActionForm action={updateNameAction} className="flex flex-col gap-4">
-            <Field label={a ? "Full legal name" : "Display name"} name="name" defaultValue={name} required minLength={3} disabled={nameLocked} />
-            {nameLocked ? null : (
+      <div className="flex flex-col gap-7 lg:flex-row lg:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-7">
+          <Card aria-label="Your name" className="flex flex-col gap-4">
+            <div>
+              <h2 className="m-0 text-xl font-extrabold">{a ? "Your legal name" : "Your name"}</h2>
+              <p className="m-0 mt-1 text-sm text-muted">
+                {nameLocked
+                  ? "Locked: it must match your ID for payouts and prizes. Message the team if it needs to change."
+                  : a
+                    ? "Must match your ID exactly, for payouts and prizes."
+                    : "Shown to your teammates on the desk and in the logs."}
+              </p>
+            </div>
+            <ActionForm action={updateNameAction} className="flex flex-col gap-4">
+              <Field label={a ? "Full legal name" : "Display name"} name="name" defaultValue={name} required minLength={3} disabled={nameLocked} />
+              {nameLocked ? null : (
+                <div>
+                  <SubmitButton pendingText="Saving…">Save name</SubmitButton>
+                </div>
+              )}
+            </ActionForm>
+          </Card>
+
+          {a ? (
+            <Card aria-label="Payout details" className="flex flex-col gap-4">
               <div>
-                <SubmitButton pendingText="Saving…">Save name</SubmitButton>
+                <h2 className="m-0 text-xl font-extrabold">Payout details</h2>
+                <p className="m-0 mt-1 text-sm text-muted">Where your Monday payout is sent. Confirm with your password, because this decides where money goes.</p>
               </div>
-            )}
-          </ActionForm>
-        </Card>
-
-        <Card aria-label="Change password" className="flex flex-col gap-4">
-          <div>
-            <h2 className="m-0 text-xl font-extrabold">Change password</h2>
-            <p className="m-0 mt-1 text-sm text-muted">At least 8 characters. You stay signed in here; other devices are signed out.</p>
-          </div>
-          <ActionForm action={changePasswordAction} resetOnSuccess className="flex flex-col gap-4">
-            <Field label="Current password" name="currentPassword" type="password" autoComplete="current-password" required />
-            <Field label="New password" name="newPassword" type="password" autoComplete="new-password" required minLength={8} />
-            <Field label="Confirm new password" name="confirmPassword" type="password" autoComplete="new-password" required minLength={8} />
+              <ActionForm action={updatePayoutAction} className="flex flex-col gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Select label="Get paid by" name="payoutMethod" options={PAYMENT_METHODS} defaultValue={a.payoutMethod ?? ""} placeholder="Choose…" required />
+                  <Field label="Payout handle" name="payoutHandle" defaultValue={a.payoutHandle ?? ""} placeholder="$yourcashtag" required />
+                </div>
+                <Field label="Current password" name="currentPassword" type="password" autoComplete="current-password" required />
+                <div>
+                  <SubmitButton pendingText="Saving…">Save payout details</SubmitButton>
+                </div>
+              </ActionForm>
+            </Card>
+          ) : null}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-7">
+          <Card aria-label="Change password" className="flex flex-col gap-4">
             <div>
-              <SubmitButton pendingText="Changing…">Change password</SubmitButton>
+              <h2 className="m-0 text-xl font-extrabold">Change password</h2>
+              <p className="m-0 mt-1 text-sm text-muted">At least 8 characters. You stay signed in here; other devices are signed out.</p>
             </div>
-          </ActionForm>
-        </Card>
-
-        {a ? (
-          <Card aria-label="Payout details" className="flex flex-col gap-4">
-            <div>
-              <h2 className="m-0 text-xl font-extrabold">Payout details</h2>
-              <p className="m-0 mt-1 text-sm text-muted">Where your Monday payout is sent. Confirm with your password, because this decides where money goes.</p>
-            </div>
-            <ActionForm action={updatePayoutAction} className="flex flex-col gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Select label="Get paid by" name="payoutMethod" options={PAYMENT_METHODS} defaultValue={a.payoutMethod ?? ""} placeholder="Choose…" required />
-                <Field label="Payout handle" name="payoutHandle" defaultValue={a.payoutHandle ?? ""} placeholder="$yourcashtag" required />
-              </div>
+            <ActionForm action={changePasswordAction} resetOnSuccess className="flex flex-col gap-4">
               <Field label="Current password" name="currentPassword" type="password" autoComplete="current-password" required />
+              <Field label="New password" name="newPassword" type="password" autoComplete="new-password" required minLength={8} />
+              <Field label="Confirm new password" name="confirmPassword" type="password" autoComplete="new-password" required minLength={8} />
               <div>
-                <SubmitButton pendingText="Saving…">Save payout details</SubmitButton>
+                <SubmitButton pendingText="Changing…">Change password</SubmitButton>
               </div>
             </ActionForm>
           </Card>
-        ) : null}
 
-        <Card aria-label="Email and phone" className="flex flex-col gap-2">
-          <h2 className="m-0 text-xl font-extrabold">Email and phone</h2>
-          <p className="m-0 text-sm text-muted">
-            To change your email or phone number, message the team. Each one can belong to only one account, so the team checks the new one first.
-          </p>
-        </Card>
+          <Card aria-label="Email and phone" className="flex flex-col gap-2">
+            <h2 className="m-0 text-xl font-extrabold">Email and phone</h2>
+            <p className="m-0 text-sm text-muted">
+              To change your email or phone number, message the team. Each one can belong to only one account, so the team checks the new one first.
+            </p>
+          </Card>
+        </div>
       </div>
     </>
   );
