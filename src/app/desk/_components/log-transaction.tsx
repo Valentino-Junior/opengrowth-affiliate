@@ -35,12 +35,12 @@ export async function LogTransaction({ fix }: { fix?: FixPrefill | null }) {
   return (
     <Card id="log" className="flex scroll-mt-8 flex-col gap-4">
       {fix ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-line-gold bg-surface-gold px-4 py-3 text-sm">
+        <div className="flex items-start justify-between gap-4 rounded-[10px] border border-line-gold bg-surface-gold px-4 py-3 text-sm">
           <span>
             Fixing the rejected <strong>{fix.summary}</strong>. It was rejected for: <strong>{fix.reason}</strong>. Correct the details, attach the right
             screenshot and submit.
           </span>
-          <Link href="/desk/log" className="font-semibold text-muted">
+          <Link href="/desk/log" className="shrink-0 rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink no-underline hover:border-muted">
             Cancel
           </Link>
         </div>

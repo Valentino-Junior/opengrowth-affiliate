@@ -113,8 +113,15 @@ export async function VerifyQueue({ userId, since }: { userId: string; since: Da
  * Each one is fixed (re-logged from a pre-filled form) or dismissed; then it leaves the list.
  */
 export async function MyRejected({ userId, fixingId }: { userId: string; fixingId?: string | null }) {
+  // The one being fixed right now is described above the form instead, so it isn't listed twice.
   const entries = await db.transaction.findMany({
-    where: { enteredBy: userId, status: "rejected", rejectionHandledAt: null, updatedAt: { gte: new Date(Date.now() - 30 * 864e5) } },
+    where: {
+      enteredBy: userId,
+      status: "rejected",
+      rejectionHandledAt: null,
+      updatedAt: { gte: new Date(Date.now() - 30 * 864e5) },
+      ...(fixingId ? { id: { not: fixingId } } : {}),
+    },
     orderBy: { updatedAt: "desc" },
     include: entryInclude,
   });
@@ -129,7 +136,7 @@ export async function MyRejected({ userId, fixingId }: { userId: string; fixingI
         {entries.map((e) => {
           const duplicate = e.rejectReason === DUPLICATE_REASON;
           return (
-            <li key={e.id} className={`flex flex-wrap items-center gap-3 border-t border-line-gold py-3 text-sm first:border-t-0 ${e.id === fixingId ? "opacity-60" : ""}`}>
+            <li key={e.id} className="flex flex-wrap items-center gap-3 border-t border-line-gold py-3 text-sm first:border-t-0">
               <span className="font-semibold">{e.player.handle}</span>
               <TxTypeLabel type={e.type} />
               <span className="font-bold">{formatCents(e.amountCents)}</span>
@@ -138,9 +145,7 @@ export async function MyRejected({ userId, fixingId }: { userId: string; fixingI
               </span>
               <Pill tone="orange">{e.rejectReason}</Pill>
               <span className="ml-auto flex flex-wrap items-center gap-2">
-                {e.id === fixingId ? (
-                  <span className="text-xs font-semibold text-gold">Fixing below</span>
-                ) : duplicate ? null : (
+                {duplicate ? null : (
                   <Link href={`${fixHref(e.id)}#log`} className="rounded-full bg-gold px-4 py-1.5 text-sm font-bold text-bg no-underline">
                     Fix and log again
                   </Link>
