@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Nightly database backup. Keeps 30 days. Add to the VPS crontab (crontab -e):
-#   15 3 * * * /opt/opengrowth/web/deploy/backup.sh >> /var/log/opengrowth-backup.log 2>&1
+#   15 3 * * * /opt/opengrowth/deploy/backup.sh >> /var/log/opengrowth-backup.log 2>&1
 # Optional off-server copy: set BACKUP_S3_URI (e.g. s3://my-backups/opengrowth) and install the AWS CLI.
 set -euo pipefail
 

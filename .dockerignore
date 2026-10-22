@@ -1,3 +1,6 @@
+.git
+README.md
+DEPLOY.md
 node_modules
 .next
 storage

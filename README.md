@@ -4,7 +4,7 @@ Affiliates bring in players and earn **5% of the weekly gross profit** those pla
 Desk employees log every deposit and cashout, a second employee verifies it, and ops pays everyone out each Monday.
 The top 3 affiliates each month also win a car, a dirt bike or an iPhone.
 
-The app lives in [`web/`](web/) (Next.js + PostgreSQL). That's what you run and deploy.
+Built with Next.js (TypeScript) and PostgreSQL: one app holds the screens, the server logic and the background worker.
 
 ---
 
@@ -40,10 +40,13 @@ sudo -u postgres createdb -O opengrowth opengrowth_affiliate
 ### 3. Install the app and its settings (once)
 
 ```sh
-cd web
+git clone https://github.com/Valentino-Junior/opengrowth-affiliate.git
+cd opengrowth-affiliate
 npm install
 cp .env.example .env
 ```
+
+Every command from here on runs inside this `opengrowth-affiliate` folder.
 
 `.env` already points at the database from step 2. Only edit it if you used a different user, password or database name.
 
@@ -67,7 +70,7 @@ Open **http://localhost:3000**. Leave this terminal running; press `Ctrl+C` to s
 ### 6. Start the background worker (optional, second terminal)
 
 ```sh
-cd web
+cd opengrowth-affiliate
 npm run worker
 ```
 
@@ -121,9 +124,9 @@ No Chrome? Run `npx playwright install chromium` once and drop `PW_CHANNEL=chrom
 
 | Problem | Fix |
 | --- | --- |
-| `password authentication failed` or `Can't reach database server` | PostgreSQL isn't running (`sudo systemctl start postgresql`) or `DATABASE_URL` in `web/.env` doesn't match step 2. |
+| `password authentication failed` or `Can't reach database server` | PostgreSQL isn't running (`sudo systemctl start postgresql`) or `DATABASE_URL` in `.env` doesn't match step 2. |
 | `Port 3000 is already in use` | Another copy is running. Stop it, or run on another port: `npx next dev -p 3001`. |
-| `@prisma/client did not initialize yet` | Run `npx prisma generate` inside `web/`. |
+| `@prisma/client did not initialize yet` | Run `npx prisma generate` in the project folder. |
 | Fonts fail to download during `npm run build` | The build fetches the two Google Fonts once; it needs an internet connection. |
 | Want a completely clean database | `npm run db:seed` (sample data) |
 
@@ -131,7 +134,7 @@ No Chrome? Run `npx playwright install chromium` once and drop `PW_CHANNEL=chrom
 
 ## Put it online
 
-[`web/DEPLOY.md`](web/DEPLOY.md) walks through hosting on **one Hostinger VPS** with Docker:
+[`DEPLOY.md`](DEPLOY.md) walks through hosting on **one Hostinger VPS** with Docker:
 PostgreSQL, the app, the worker and Caddy (automatic HTTPS), plus nightly backups and switching uploads to AWS S3.
 On a real server you create real staff accounts with `npm run create-staff`; the sample data refuses to load in production.
 
@@ -158,7 +161,7 @@ All amounts (rate, minimum, ID threshold, badges, prizes, group chat link) are e
 
 ---
 
-## Where things live in `web/`
+## Where things live
 
 | Path | What |
 | --- | --- |

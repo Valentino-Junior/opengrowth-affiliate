@@ -30,8 +30,7 @@ mkdir -p /opt/opengrowth && cd /opt/opengrowth
 # Either clone your repository:
 git clone YOUR_REPO_URL .
 # …or copy it from your computer (run this on your computer, not the VPS):
-#   rsync -av --exclude node_modules --exclude .next --exclude storage ./ root@YOUR_VPS_IP:/opt/opengrowth/
-cd /opt/opengrowth/web
+#   rsync -av --exclude node_modules --exclude .next --exclude storage --exclude .env ./ root@YOUR_VPS_IP:/opt/opengrowth/
 ```
 
 ## 4. Settings
@@ -71,7 +70,7 @@ Affiliates sign up themselves at `/join` (ops approves them) or ops registers th
 ```sh
 crontab -e
 # add:
-15 3 * * * /opt/opengrowth/web/deploy/backup.sh >> /var/log/opengrowth-backup.log 2>&1
+15 3 * * * /opt/opengrowth/deploy/backup.sh >> /var/log/opengrowth-backup.log 2>&1
 ```
 
 Backups land in `/var/backups/opengrowth` (30 days kept). Keep a copy off the server: set `BACKUP_S3_URI`
@@ -101,7 +100,7 @@ New uploads go to S3 from then on. Files uploaded before the switch stay on the 
 
 ## Everyday operations
 
-| Task | Command (in `/opt/opengrowth/web`) |
+| Task | Command (in `/opt/opengrowth`) |
 | --- | --- |
 | Update to a new version | `git pull && docker compose up -d --build` |
 | See logs | `docker compose logs -f app` / `docker compose logs -f worker` |
