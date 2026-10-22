@@ -15,7 +15,7 @@ test("the header's profile button opens My profile with the account's details", 
   await login(page, "affiliate04@opengrowth.local");
   await expect(page.getByRole("link", { name: "My profile: Affiliate 04" })).toContainText("AF");
   await openProfile(page);
-  const card = page.getByLabel("Profile");
+  const card = page.getByRole("region", { name: "Profile" });
   await expect(card.getByRole("heading", { name: "Affiliate 04" })).toBeVisible();
   await expect(card.getByText("affiliate04@opengrowth.local")).toBeVisible();
   await expect(card.getByText("OG-A04")).toBeVisible();
@@ -79,7 +79,7 @@ test("payout details need the current password; then put back", async ({ page })
   };
   await expect((await save("$aff04new", "wrong")).getByText("Your current password is wrong.")).toBeVisible();
   await expect((await save("$aff04new", "opengrowth")).getByText("Payout details saved. Your next payout goes here.")).toBeVisible();
-  await expect(page.getByLabel("Profile").getByText("Apple Pay · $aff04new")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Profile" }).getByText("Apple Pay · $aff04new")).toBeVisible();
   await expect((await save("affiliate04", "opengrowth")).getByText("Payout details saved.")).toBeVisible();
 });
 
@@ -100,4 +100,13 @@ test("an affiliate with a verified ID can't change their legal name", async ({ p
   await expect(page.getByLabel("Full legal name")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save name" })).toHaveCount(0);
   await expect(page.getByText(/Locked: it must match your ID/)).toBeVisible();
+});
+
+test("clicking the OG code copies it", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await login(page, "affiliate01@opengrowth.local");
+  await page.goto("/account");
+  await page.getByRole("button", { name: "Copy OG code OG-A01" }).click();
+  await expect(page.getByRole("button", { name: "OG code copied" })).toContainText("Copied");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("OG-A01");
 });

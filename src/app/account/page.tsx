@@ -2,6 +2,7 @@ import { changePasswordAction, updateNameAction, updatePayoutAction } from "@/ap
 import { requireRole } from "@/lib/auth";
 import { methodLabel } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
+import { CopyText } from "@/components/copy-text";
 import { PayoutFields } from "@/components/payout-fields";
 import { Avatar, displayName } from "@/components/avatar";
 import { Field } from "@/components/field";
@@ -54,7 +55,9 @@ export default async function AccountPage() {
             {a?.referralCode ? (
               <>
                 <dt className="text-muted">OG code</dt>
-                <dd className="m-0 font-bold text-gold">{a.referralCode}</dd>
+                <dd className="m-0">
+                  <CopyText text={a.referralCode} label="OG code" className="text-gold" />
+                </dd>
               </>
             ) : null}
             {a ? (
