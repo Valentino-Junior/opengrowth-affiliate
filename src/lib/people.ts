@@ -365,3 +365,38 @@ async function withUniqueRetry<T>(fn: () => Promise<T>): Promise<T> {
     }
   }
 }
+
+// ---------- Profile changes ----------
+
+/**
+ * Affiliate changes where their commission is sent. The old handle leaves the registry, the new one goes in,
+ * and if it matches one of their own players' payment handles the pair is flagged as a likely self-referral.
+ */
+export async function updatePayoutDetails(affiliateId: string, method: PaymentMethod, handle: string, actorId: string) {
+  const payoutHandle = handle.trim();
+  if (payoutHandle.length < 2) throw new PeopleError("Enter your payout handle (e.g. your $cashtag).");
+  const normalized = normalizeHandle(payoutHandle);
+
+  return db.$transaction(async (tx) => {
+    const before = await tx.affiliate.findUniqueOrThrow({ where: { id: affiliateId } });
+    await tx.affiliate.update({ where: { id: affiliateId }, data: { payoutMethod: method, payoutHandle } });
+    await tx.contactRegistry.deleteMany({ where: { ownerType: "affiliate", ownerId: affiliateId, kind: "payment_handle" } });
+    await tx.contactRegistry.create({ data: { kind: "payment_handle", valueNormalized: normalized, ownerType: "affiliate", ownerId: affiliateId } });
+
+    const players = await tx.player.findMany({ where: { affiliateId, paymentHandle: { not: null } } });
+    const matches = players.filter((p) => normalizeHandle(p.paymentHandle!) === normalized);
+    for (const p of matches) await openFlags(tx, affiliateId, p.id, ["payment_handle_match"], "Affiliate changed their payout handle to this player's");
+
+    await tx.auditLog.create({
+      data: {
+        actorId,
+        action: "affiliate.payout_details",
+        entity: "affiliate",
+        entityId: affiliateId,
+        before: { payoutMethod: before.payoutMethod, payoutHandle: before.payoutHandle },
+        after: { payoutMethod: method, payoutHandle, flagged: matches.map((p) => p.handle) },
+      },
+    });
+    return { flagged: matches.length };
+  });
+}

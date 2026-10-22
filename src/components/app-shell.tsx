@@ -1,6 +1,8 @@
+import Link from "next/link";
 import type { Role } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions/auth";
+import { Avatar, displayName } from "./avatar";
 import { Brand } from "./ui";
 import { NavLinks, type NavItem } from "./nav-links";
 
@@ -45,7 +47,7 @@ const brandFor: Record<Area, { suffix?: string; tag?: string }> = {
 };
 
 export function AppShell({ area, user, children }: { area: Area; user: CurrentUser; children: React.ReactNode }) {
-  const name = user.affiliate?.legalName ?? user.staff?.displayName ?? user.email;
+  const name = displayName(user);
   return (
     <>
       <header className="border-b border-line px-4 sm:px-8">
@@ -55,7 +57,14 @@ export function AppShell({ area, user, children }: { area: Area; user: CurrentUs
             <NavLinks items={navFor(area, user.role)} />
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <span className="hidden text-muted sm:inline">{name}</span>
+            <Link
+              href="/account"
+              aria-label={`My profile: ${name}`}
+              className="flex items-center gap-2 rounded-full border border-transparent py-1 pr-3 pl-1 text-ink no-underline hover:border-line"
+            >
+              <Avatar name={name} />
+              <span className="hidden sm:inline">{name}</span>
+            </Link>
             <form action={logoutAction}>
               <button className="cursor-pointer rounded-full border border-line px-3 py-1.5 font-semibold text-ink hover:border-muted">
                 Log out

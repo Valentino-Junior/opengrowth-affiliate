@@ -121,6 +121,7 @@ PW_CHANNEL=chrome npm run test:e2e         # 40 browser tests (uses your install
 ```
 
 The browser tests reload the sample data first, so anything you changed by hand is reset.
+To run one self-cleaning file against your dev server without resetting the data: `PW_NO_SEED=1 PW_CHANNEL=chrome npx playwright test e2e/account.spec.ts`.
 No Chrome? Run `npx playwright install chromium` once and drop `PW_CHANNEL=chrome`.
 
 ### If something goes wrong
