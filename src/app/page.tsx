@@ -94,7 +94,7 @@ export default async function HowItWorksPage() {
           </div>
         </section>
 
-        <section aria-label="The math" className="flex flex-col gap-6 rounded-[18px] border border-line-green bg-surface-green p-6 sm:p-10">
+        <section aria-label="The math" className="flex flex-col gap-6 rounded-[18px] border border-line-gold bg-surface-gold p-6 sm:p-10">
           <SectionTitle eyebrow="THE MATH" title="One formula. No fine print." />
           <p className="m-0 flex flex-wrap items-center gap-x-4 gap-y-2 text-2xl font-extrabold sm:text-3xl">
             <span>Your players&apos; deposits</span>
