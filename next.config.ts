@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+// `npm run dev` evaluates code and live-reloads over a websocket; production (`next build`) needs neither,
+// so only development relaxes the policy. Without this, no page is interactive in dev.
+const isDev = process.env.NODE_ENV !== "production";
+
 // Security headers on every response. HTTPS (and HSTS) is terminated by Caddy in front of the app.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -11,11 +15,11 @@ const securityHeaders = [
     // Next.js needs inline scripts/styles for hydration; everything else is same-origin. No framing, no plugins.
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self'",
-      "connect-src 'self'",
+      `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
       "frame-ancestors 'none'",
       "form-action 'self'",
       "base-uri 'self'",
