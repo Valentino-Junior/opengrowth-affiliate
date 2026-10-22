@@ -98,7 +98,7 @@ export default async function EntryPage({ params }: { params: Promise<{ id: stri
 
           {canReview ? (
             <>
-              <Card tone="green" className="flex flex-col gap-3">
+              <Card className="flex flex-col gap-3">
                 <h2 className="m-0 text-xl font-extrabold">Verify</h2>
                 <ActionForm action={verifyTransactionAction} hidden={{ transactionId: entry.id }} className="flex flex-col gap-3">
                   <label className="flex items-start gap-3 text-sm">

@@ -38,6 +38,15 @@ body {
   color-scheme: dark;
 }
 
+/* Anything you click to choose shows the pointing hand: checkboxes, radios, their labels, and dropdowns. */
+input[type="checkbox"],
+input[type="radio"],
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]),
+select {
+  cursor: pointer;
+}
+
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
