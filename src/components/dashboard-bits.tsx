@@ -31,13 +31,14 @@ export function MathStrip(p: { deposits: bigint; cashouts: bigint; gross: bigint
   );
   const op = (s: string) => <span className="text-xl text-muted">{s}</span>;
   return (
-    <section aria-label="How this week is calculated" className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-card border border-line-green bg-surface-green px-6 py-5">
-      <span className="w-full text-xs font-bold tracking-[3px] text-green">THIS WEEK&apos;S MATH</span>
+    <section aria-label="How this week is calculated" className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-card border border-line bg-surface px-6 py-5">
+      <span className="w-full text-xs font-bold tracking-[3px] text-gold">THIS WEEK&apos;S MATH</span>
       {term("Deposits", formatCents(p.deposits, { whole: true }))}
       {op("−")}
       {term("Cashouts", formatCents(p.cashouts, { whole: true }))}
       {op("=")}
-      {term("Gross profit", formatCents(p.gross, { whole: true }))}
+      {/* Colour carries meaning only here: green for a winning week, orange for a losing one. */}
+      {term("Gross profit", formatCents(p.gross, { whole: true }), p.gross > 0n ? "text-green" : p.gross < 0n ? "text-orange" : "text-ink")}
       {op("×")}
       {term("Your cut", p.rate)}
       {op("=")}

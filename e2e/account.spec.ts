@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { login, logout } from "./helpers";
+import { login } from "./helpers";
 
 // My profile: everyone can see their details and change their name and password; affiliates their payout details.
 // Every test puts back what it changed, so this file is safe to run against a dev database (PW_NO_SEED=1).
