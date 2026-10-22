@@ -40,7 +40,7 @@ test("10 wrong passwords lock the email for 15 minutes, even with the right pass
     await page.getByLabel("Password", { exact: true }).fill(`wrong-${i}`);
     // Wait for each attempt to reach the server before the next one.
     await Promise.all([page.waitForResponse((r) => r.request().method() === "POST"), page.getByRole("button", { name: "Log in" }).click()]);
-    await expect(page.getByText("Email or password is wrong.")).toBeVisible();
+    await expect(page.getByText("Email or password is wrong")).toBeVisible();
   }
   await page.getByLabel("Email").fill("affiliate03@opengrowth.local");
   await page.getByLabel("Password", { exact: true }).fill("opengrowth");

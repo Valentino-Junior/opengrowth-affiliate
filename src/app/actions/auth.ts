@@ -31,7 +31,7 @@ export async function loginAction(_prev: LoginState, form: FormData): Promise<Lo
   const ok = user?.passwordHash && (await verifyPassword(parsed.data.password, user.passwordHash));
   if (!user || !ok) {
     await allow(failKey, LIMITS.failedLoginsPerEmail.limit, LIMITS.failedLoginsPerEmail.window);
-    return { error: "Email or password is wrong." };
+    return { error: "Email or password is wrong" };
   }
   if (user.status !== "active") return { error: "This account is not active. Message the team." };
 

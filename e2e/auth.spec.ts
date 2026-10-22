@@ -37,7 +37,7 @@ test("wrong password shows an error", async ({ page }) => {
   await page.getByLabel("Email").fill("ops@opengrowth.local");
   await page.getByLabel("Password", { exact: true }).fill("nope");
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page.getByText("Email or password is wrong.")).toBeVisible();
+  await expect(page.getByText("Email or password is wrong")).toBeVisible();
 });
 
 test("an employee cannot open the payout run", async ({ page }) => {

@@ -2,7 +2,7 @@
 
 import { useActionState, useCallback, useState } from "react";
 
-// Form-level messages ("Email or password is wrong.", "Saved.") that show for a few seconds and then fade out.
+// Form-level messages ("Email or password is wrong", "Saved.") that show for a few seconds and then fade out.
 // Every submission gets a new `nonce`, so the same message shows again on the next try.
 
 export type Flashable = { nonce?: number };
