@@ -123,7 +123,8 @@ test("self-serve signup waits for approval, then gets a code", async ({ page }) 
 test("desk adds a walk-in whose payment handle is the affiliate's → straight to ops", async ({ page }) => {
   await login(page, "a3@opengrowth.local");
   await page.goto("/desk/new-players");
-  const form = page.locator("#new form").last();
+  await page.getByRole("button", { name: "Add player" }).click();
+  const form = page.getByRole("dialog", { name: "Add a player who gave a code at the desk" });
   await form.getByLabel("Player handle").fill("walkin1");
   await form.getByLabel("Referral code").fill("OG-A02");
   await form.getByLabel("Pays with").selectOption("crypto");
