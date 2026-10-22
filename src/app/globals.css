@@ -40,3 +40,22 @@ body {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* Form messages: visible ~5 s, then fade out (see components/flash.tsx). */
+@keyframes flash-out {
+  0%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.flash-out {
+  animation: flash-out 5.5s ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash-out {
+    animation-timing-function: steps(1, end); /* no fade: just disappears after the same time */
+  }
+}

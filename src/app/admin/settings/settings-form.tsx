@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { Flash, useFlashActionState } from "@/components/flash";
 import { saveSettingsAction, type SettingsState } from "@/app/actions/settings";
 import type { Settings } from "@/lib/settings";
 import { Button, Card } from "@/components/ui";
@@ -9,7 +9,7 @@ import { Field } from "@/components/field";
 const dollars = (cents: number) => (cents / 100).toFixed(2).replace(/\.00$/, "");
 
 export function SettingsForm({ settings }: { settings: Settings }) {
-  const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettingsAction, {});
+  const [state, action, pending] = useFlashActionState<SettingsState>(saveSettingsAction, {});
   return (
     <form action={action} className="flex flex-col gap-6">
       <Card className="grid gap-4 sm:grid-cols-3">
@@ -50,8 +50,16 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save settings"}
         </Button>
-        {state.error ? <span role="alert" className="text-sm text-orange">{state.error}</span> : null}
-        {state.saved ? <span role="status" className="text-sm text-green">Saved.</span> : null}
+        {state.error ? (
+          <Flash nonce={state.nonce} tone="error">
+            {state.error}
+          </Flash>
+        ) : null}
+        {state.saved ? (
+          <Flash nonce={state.nonce} tone="success">
+            Saved.
+          </Flash>
+        ) : null}
       </div>
     </form>
   );

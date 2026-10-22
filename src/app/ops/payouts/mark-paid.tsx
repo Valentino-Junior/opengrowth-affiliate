@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
+import { Flash, useFlashActionState } from "@/components/flash";
 import { markPaidAction } from "@/app/actions/payouts";
 import type { ActionState } from "@/lib/errors";
 import { Button } from "@/components/ui";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui";
 /** "Mark paid" → a confirm step that restates who, how much and how, with an optional payment reference. */
 export function MarkPaid({ rowId, amountCents, amount, method, name }: { rowId: string; amountCents: string; amount: string; method: string; name: string }) {
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState<ActionState, FormData>(markPaidAction, {});
+  const [state, action, pending] = useFlashActionState<ActionState>(markPaidAction, {});
 
   if (!open)
     return (
@@ -38,7 +39,11 @@ export function MarkPaid({ rowId, amountCents, amount, method, name }: { rowId: 
           Cancel
         </Button>
       </div>
-      {state.error ? <p className="m-0 text-xs text-orange">{state.error}</p> : null}
+      {state.error ? (
+        <Flash nonce={state.nonce} tone="error" className="!text-xs">
+          {state.error}
+        </Flash>
+      ) : null}
     </form>
   );
 }
