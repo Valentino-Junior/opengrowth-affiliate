@@ -97,9 +97,6 @@ export async function VerifyQueue({ userId, since }: { userId: string; since: Da
           ))}
         </tbody>
       </Table>
-      <p className="m-0 px-6 text-xs text-muted">
-        Rejected entries need a reason and go back to whoever logged them. Edits after verification need an ops manager.
-      </p>
     </Card>
   );
 }

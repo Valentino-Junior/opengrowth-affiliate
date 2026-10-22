@@ -24,9 +24,6 @@ export default async function PayoutsPage() {
       </section>
       <Card>
         <PayoutHistory rows={rows} />
-        <p className="m-0 mt-3 text-xs text-muted">
-          A losing week pays $0 and its loss comes off your next winning week&apos;s profit. Weeks under the minimum roll into the next payout.
-        </p>
       </Card>
     </>
   );

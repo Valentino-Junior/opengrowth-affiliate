@@ -187,7 +187,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </Link>
           </div>
           <PayoutHistory rows={history} />
-          <p className="m-0 mt-2 text-xs text-muted">A losing week pays $0 and its loss comes off your next winning week&apos;s profit.</p>
         </Card>
       </div>
     </>

@@ -27,7 +27,7 @@ test("close last week → the run matches the ops mockup", async ({ page }) => {
   await expectRow("Affiliate 04", ["$160", "$8.00"], "Under minimum");
   await expectRow("Affiliate 05", ["$2,200", "$110.00"], "Flagged");
   await expectRow("Affiliate 06", ["$2,960", "$148.00"], "Ready");
-  await expect(page.getByText("Affiliate 05 flagged: payment handle matches the affiliate (player player24).")).toBeVisible();
+  await expect(page.getByText("Affiliate 05 is on hold: payment handle matches the affiliate (player player24). Review the flag before paying.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Close week now" })).toHaveCount(0);
 });
 

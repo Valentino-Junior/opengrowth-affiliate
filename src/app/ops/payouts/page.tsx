@@ -66,6 +66,7 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
     db.flag.findMany({ where: { status: "open" }, include: { affiliate: true, player: true } }),
   ]);
 
+  const heldFlags = openFlags.filter((f) => rows.some((r) => r.affiliateId === f.affiliateId && r.status === "flagged"));
   const sum = (f: (r: (typeof rows)[number]) => bigint) => rows.reduce((t, r) => t + f(r), 0n);
   const readyCents = sum((r) => (r.status === "ready" ? r.payableCents : 0n));
   const paidCents = sum((r) => (r.status === "paid" ? r.payableCents : 0n));
@@ -156,6 +157,16 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
             Net = gross profit + carry-forward. Commission = {rate} of net, never below $0. Amounts under the minimum roll into the next payout.
           </p>
         </div>
+        {heldFlags.length ? (
+          <div role="note" className="mx-6 flex flex-col gap-1 rounded-[10px] border border-red/40 bg-red/10 px-4 py-3 text-sm">
+            {heldFlags.map((f) => (
+              <span key={f.id}>
+                <strong>{f.affiliate.legalName}</strong> is on hold: {FLAG_REASON_LABEL[f.reason].toLowerCase()}
+                {f.player ? ` (player ${f.player.handle})` : ""}. Review the flag before paying.
+              </span>
+            ))}
+          </div>
+        ) : null}
         <Table>
           <thead>
             <tr>
@@ -215,14 +226,6 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
             ))}
           </tbody>
         </Table>
-        {openFlags
-          .filter((f) => rows.some((r) => r.affiliateId === f.affiliateId && r.status === "flagged"))
-          .map((f) => (
-            <p key={f.id} className="m-0 px-6 text-sm text-orange">
-              {f.affiliate.legalName} flagged: {FLAG_REASON_LABEL[f.reason].toLowerCase()}
-              {f.player ? ` (player ${f.player.handle})` : ""}.
-            </p>
-          ))}
       </Card>
       <IdChecks weekId={week.id} thresholdCents={week.idThresholdCents ?? 0n} />
     </>

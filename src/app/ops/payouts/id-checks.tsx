@@ -30,7 +30,8 @@ export async function IdChecks({ weekId, thresholdCents }: { weekId: string; thr
       <div className="px-6">
         <h2 className="m-0 text-xl font-extrabold">ID checks before release</h2>
         <p className="m-0 mt-1 text-sm text-muted">
-          Required for any payout over {formatCents(thresholdCents, { whole: true })} and every Top 3 prize. Name on ID must match the account.
+          Required for any payout over {formatCents(thresholdCents, { whole: true })} and every Top 3 prize. Name on ID must match the account. A flagged affiliate can&apos;t receive a prize until the flag is cleared; if
+          they&apos;re disqualified, the next affiliate in line moves up.
         </p>
       </div>
       <Table>
@@ -82,7 +83,6 @@ export async function IdChecks({ weekId, thresholdCents }: { weekId: string; thr
           })}
         </tbody>
       </Table>
-      <p className="m-0 px-6 text-xs text-muted">A flagged affiliate can&apos;t receive a prize until the flag is cleared. If they&apos;re disqualified, the next affiliate in line moves up.</p>
     </Card>
   );
 }
