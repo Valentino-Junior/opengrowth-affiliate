@@ -40,7 +40,7 @@ export async function LogTransaction({ fix }: { fix?: FixPrefill | null }) {
             Fixing the rejected <strong>{fix.summary}</strong>. It was rejected for: <strong>{fix.reason}</strong>. Correct the details, attach the right
             screenshot and submit.
           </span>
-          <Link href="/desk/log" className="shrink-0 rounded-full border border-line px-3 py-1 text-xs font-semibold text-ink no-underline hover:border-muted">
+          <Link href="/desk/log" className="shrink-0 rounded-full border border-red/50 px-3 py-1 text-xs font-semibold text-red no-underline hover:bg-red/10">
             Cancel
           </Link>
         </div>
