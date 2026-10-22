@@ -20,6 +20,9 @@ import { PAYMENT_METHODS } from "@/lib/labels";
 import { attempt, type ActionState } from "@/lib/errors";
 import { refreshAllHeldRows } from "@/lib/payouts";
 import { LIMITS, allow, clientIp } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
+import { approvedMessage, declinedMessage, welcomeMessage } from "@/lib/email";
+import { sendEmailCode } from "@/lib/verification";
 
 const methodValues = PAYMENT_METHODS.map((m) => m.value) as [string, ...string[]];
 const str = (form: FormData, k: string) => String(form.get(k) ?? "").trim();
@@ -54,9 +57,10 @@ export async function signupAffiliateAction(_prev: ActionState, form: FormData):
       { approve: false, actorId: null, revealOwner: false },
     );
     await createSession(user.id);
+    await sendEmailCode(user);
   });
   if (result.error) return result;
-  redirect("/dashboard");
+  redirect("/verify-email");
 }
 
 const registerSchema = z.object({
@@ -86,6 +90,7 @@ export async function registerAffiliateAction(_prev: ActionState, form: FormData
       { approve: true, actorId: user.id, revealOwner: true },
     );
     revalidatePath("/ops/affiliates");
+    await welcomeMessage(parsed.data.email, affiliate.legalName, affiliate.referralCode!);
     return {
       message: `${affiliate.legalName} is registered.`,
       detail: { Code: affiliate.referralCode!, "Login email": parsed.data.email, "Temporary password": tempPassword },
@@ -98,7 +103,9 @@ export async function approveAffiliateAction(_prev: ActionState, form: FormData)
   return attempt(async () => {
     const a = await approveAffiliate(str(form, "affiliateId"), user.id);
     revalidatePath("/ops/affiliates");
-    return { message: `Approved: ${a.referralCode}` };
+    const owner = await db.user.findUniqueOrThrow({ where: { id: a.userId } });
+    const sent = await approvedMessage(owner.email, a.legalName, a.referralCode!);
+    return { message: `Approved: ${a.referralCode}.${sent.ok ? " We emailed them." : " The email couldn't be sent; tell them yourself."}` };
   });
 }
 
@@ -107,8 +114,10 @@ export async function declineAffiliateAction(_prev: ActionState, form: FormData)
   const reason = str(form, "reason");
   if (!reason) return { error: "Pick a reason" };
   return attempt(async () => {
-    await declineAffiliate(str(form, "affiliateId"), user.id, reason);
+    const affiliate = await db.affiliate.findUniqueOrThrow({ where: { id: str(form, "affiliateId") }, include: { user: true } });
+    await declineAffiliate(affiliate.id, user.id, reason);
     revalidatePath("/ops/affiliates");
+    await declinedMessage(affiliate.user.email, affiliate.legalName);
   });
 }
 

@@ -149,6 +149,7 @@ model User {
   affiliate Affiliate?
   staff     Staff?
   sessions  Session[]
+  verificationCodes VerificationCode[]
 
   @@map("users")
 }
@@ -443,4 +444,38 @@ model RateLimit {
   hits        Int
 
   @@map("rate_limits")
+}
+
+/// One-time codes sent to prove someone owns an email (later: phone). Only a hash of the code is stored.
+model VerificationCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  purpose    String // "email"
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  attempts   Int       @default(0)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@map("verification_codes")
+}
+
+/// Every email the app sends. Without an email service configured the body is kept here (status "logged")
+/// so it can be read in the dev mailbox; once sent through the provider only the subject and status are kept.
+model EmailMessage {
+  id         String   @id @default(uuid()) @db.Uuid
+  to         String
+  kind       String // "email_code" | "approved" | "declined" | "welcome"
+  subject    String
+  status     String // "sent" | "logged" | "failed"
+  body       String?
+  providerId String?  @map("provider_id")
+  error      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([to, createdAt])
+  @@map("email_messages")
 }

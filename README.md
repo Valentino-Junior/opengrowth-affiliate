@@ -185,6 +185,7 @@ All amounts (rate, minimum, ID threshold, badges, prizes, group chat link) are e
 
 ## Not built yet
 
-- Email and SMS one-time codes, and two-factor login for staff (needs Twilio and Resend accounts). Until then, email and phone are checked for duplicates but not proven to belong to the person.
+- SMS codes to confirm phone numbers, and two-factor login for staff (needs a Twilio account). Phone numbers are checked for duplicates but not yet proven to belong to the person.
+- Email confirmation is built: it uses Resend once `RESEND_API_KEY` is set (DEPLOY.md step 9). Until then emails appear in the dev mailbox at http://localhost:3000/dev/mailbox.
 - Re-ranking a race month that was already settled if a winner is disqualified afterwards (ops handles it by hand).
 

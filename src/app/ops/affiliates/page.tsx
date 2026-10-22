@@ -60,7 +60,12 @@ export default async function AffiliatesPage() {
             {pending.map((a) => (
               <tr key={a.id}>
                 <Td className="font-semibold">{a.legalName}</Td>
-                <Td>{a.user.email}</Td>
+                <Td>
+                  <span className="flex flex-col gap-1">
+                    {a.user.email}
+                    {a.user.emailVerifiedAt ? <Pill tone="green">Email confirmed</Pill> : <Pill tone="gold">Email not confirmed</Pill>}
+                  </span>
+                </Td>
                 <Td>{a.user.phone}</Td>
                 <Td>
                   {methodLabel(a.payoutMethod)} · {a.payoutHandle}

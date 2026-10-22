@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { changePasswordAction, updateNameAction, updatePayoutAction } from "@/app/actions/account";
 import { requireRole } from "@/lib/auth";
 import { methodLabel } from "@/lib/labels";
@@ -49,7 +50,16 @@ export default async function AccountPage() {
           </div>
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr_auto_1fr]">
             <dt className="text-muted">Email</dt>
-            <dd className="m-0 break-all">{user.email}</dd>
+            <dd className="m-0 flex flex-wrap items-center gap-2">
+              <span className="break-all">{user.email}</span>
+              {user.emailVerifiedAt ? (
+                <Pill tone="green">Confirmed</Pill>
+              ) : (
+                <Link href="/verify-email" className="text-xs font-bold text-gold">
+                  Not confirmed · Confirm now
+                </Link>
+              )}
+            </dd>
             <dt className="text-muted">Phone</dt>
             <dd className="m-0">{user.phone}</dd>
             {a?.referralCode ? (

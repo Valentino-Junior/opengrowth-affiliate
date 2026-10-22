@@ -8,6 +8,7 @@ import { getSettings } from "@/lib/settings";
 import { liveWeekTotals } from "@/lib/transactions";
 import { formatWeekRange, localDay } from "@/lib/weeks";
 import { CopyCode } from "@/components/copy-code";
+import { EmailNotice } from "@/components/email-notice";
 import { MathStrip, PayoutHistory, PlayersTable, StatusBadge } from "@/components/dashboard-bits";
 import { Card, PageTitle, Pill, Stat } from "@/components/ui";
 
@@ -17,18 +18,20 @@ const inSentence = (prize: string) => prize.replace(/^(A|An|The) /, (m) => m.toL
 const payDay = (d: Date) =>
   new Date(`${d.toISOString().slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ id?: string; email?: string }> }) {
   const user = await requireRole(AREA_ROLES.affiliate);
   const affiliate = user.affiliate!;
   const settings = await getSettings();
   const rate = formatRate(settings.commissionRateBp);
   const firstName = affiliate.legalName.split(" ")[0];
-  const { id: idParam } = await searchParams;
+  const { id: idParam, email: emailParam } = await searchParams;
+  const emailNotice = <EmailNotice email={user.email} verified={!!user.emailVerifiedAt} justConfirmed={emailParam === "confirmed"} />;
 
   if (!affiliate.referralCode)
     return (
       <>
         <PageTitle eyebrow="AFFILIATE DASHBOARD" title={`Welcome, ${firstName}`} lead={`You'll earn ${rate} of the gross profit from every player you bring in.`} />
+        {emailNotice}
         <Card tone="gold">
           <p className="m-0 text-sm">
             Your account is waiting for approval by the team. Your OG code appears here as soon as it is approved.
@@ -69,6 +72,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <PageTitle eyebrow="AFFILIATE DASHBOARD" title={`Welcome back, ${firstName}`} lead={`You earn ${rate} of the gross profit from every player you bring in. Paid every Monday.`} />
         <StatusBadge name={badge.name} />
       </div>
+
+      {emailNotice}
 
       {idParam === "submitted" ? (
         <Card tone="green">

@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { endAllSessions, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
+import { endAllSessions, getCurrentUser, hashPassword, homeFor, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { attempt, RuleError, type ActionState } from "@/lib/errors";
 import { PAYMENT_METHODS } from "@/lib/labels";
 import { updatePayoutDetails } from "@/lib/people";
 import { allow } from "@/lib/rate-limit";
+import { confirmEmailCode, sendEmailCode } from "@/lib/verification";
 
 // Everything here changes only the signed-in person's own account.
 
@@ -87,5 +88,26 @@ export async function updatePayoutAction(_prev: ActionState, form: FormData): Pr
         ? "Payout details saved. This handle matches one of your players, so the team will review it before your next payout."
         : "Payout details saved. Your next payout goes here.",
     };
+  });
+}
+
+// ---------- Email confirmation ----------
+
+export async function confirmEmailAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (!user.emailVerifiedAt) {
+    const result = await attempt(() => confirmEmailCode(user.id, str(form, "code")));
+    if (result.error) return result;
+  }
+  redirect(`${homeFor(user.role)}?email=confirmed`);
+}
+
+export async function resendEmailCodeAction(): Promise<ActionState> {
+  return attempt(async () => {
+    const user = await me();
+    if (user.emailVerifiedAt) throw new RuleError("Your email is already confirmed.");
+    await sendEmailCode(user);
+    return { message: `New code sent to ${user.email}.` };
   });
 }

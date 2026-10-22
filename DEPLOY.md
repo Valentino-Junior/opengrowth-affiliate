@@ -98,6 +98,17 @@ gunzip -c /var/backups/opengrowth/opengrowth-2026-10-19-0315.sql.gz | docker com
 New uploads go to S3 from then on. Files uploaded before the switch stay on the VPS volume; copy them once with
 `docker compose cp app:/app/storage ./storage-export && aws s3 sync ./storage-export s3://opengrowth-uploads/`.
 
+## 9. Turn on email (Resend)
+
+Without this the app still works, but it can't send the 6-digit email confirmation codes or the "you're approved" emails.
+
+1. Create a free account at [resend.com](https://resend.com) → **Domains** → **Add domain** → your domain (e.g. `yourdomain.com`).
+2. Add the DNS records Resend shows (TXT/MX/CNAME) at your domain provider and wait until Resend says **Verified**.
+3. **API Keys** → **Create API key** (sending access) and copy it.
+4. In `.env` set `RESEND_API_KEY=re_…` and `EMAIL_FROM=Opengrowth <no-reply@yourdomain.com>` (an address on the verified domain), then `docker compose up -d`.
+5. Test it: sign up at `/join` with an email you own; the code should arrive within a minute.
+   Every email and its delivery status is recorded in the `email_messages` table.
+
 ## Everyday operations
 
 | Task | Command (in `/opt/opengrowth`) |
