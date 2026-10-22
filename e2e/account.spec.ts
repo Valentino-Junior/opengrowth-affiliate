@@ -18,7 +18,7 @@ test("the header's profile button opens My profile with the account's details", 
   const card = page.getByRole("region", { name: "Profile" });
   await expect(card.getByRole("heading", { name: "Affiliate 04" })).toBeVisible();
   await expect(card.getByText("affiliate04@opengrowth.local")).toBeVisible();
-  await expect(card.getByText("OG-A04")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Referral code" }).getByText("OG-A04", { exact: true })).toBeVisible();
 });
 
 test("change password: wrong current and mismatch are refused; success logs you out everywhere; then put back", async ({ page, browser }) => {
@@ -102,11 +102,14 @@ test("an affiliate with a verified ID can't change their legal name", async ({ p
   await expect(page.getByText(/Locked: it must match your ID/)).toBeVisible();
 });
 
-test("clicking the OG code copies it", async ({ page, context }) => {
+test("the profile's referral card copies the code and the link", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await login(page, "affiliate01@opengrowth.local");
   await page.goto("/account");
-  await page.getByRole("button", { name: "Copy OG code OG-A01" }).click();
-  await expect(page.getByRole("button", { name: "OG code copied" })).toContainText("Copied");
+  const card = page.getByRole("region", { name: "Referral code" });
+  await card.getByRole("button", { name: "Copy code" }).click();
+  await expect(card.getByRole("button", { name: "Copied" })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("OG-A01");
+  await card.getByRole("button", { name: "Copy link" }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/r\/OG-A01$/);
 });

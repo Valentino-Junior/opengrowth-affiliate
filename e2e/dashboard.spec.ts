@@ -45,7 +45,8 @@ test("My players: pick an earlier week", async ({ page }) => {
 
 test("ID upload refuses a non-image, then goes to ops review", async ({ page }) => {
   await login(page, "affiliate04@opengrowth.local");
-  await page.getByRole("link", { name: "Verify my ID" }).click();
+  await page.goto("/account");
+  await page.getByRole("link", { name: /Upload your ID/ }).click();
   await page.getByLabel("Photo of the front of your ID").setInputFiles(fake);
   await page.getByLabel("Selfie holding the ID").setInputFiles(receipt);
   await page.getByLabel(/This is my own ID/).check();
@@ -57,6 +58,8 @@ test("ID upload refuses a non-image, then goes to ops review", async ({ page }) 
   await page.getByLabel(/This is my own ID/).check();
   await page.getByRole("button", { name: "Send for review" }).click();
   await expect(page).toHaveURL(/\/dashboard\?id=submitted/);
+  await expect(page.getByText("Thanks. Your ID is with the team for review.")).toBeVisible();
+  await page.goto("/account");
   await expect(page.getByText("ID being checked")).toBeVisible();
   await logout(page);
 
@@ -72,8 +75,9 @@ test("ID upload refuses a non-image, then goes to ops review", async ({ page }) 
   await logout(page);
 
   await login(page, "affiliate04@opengrowth.local");
+  await page.goto("/account");
   await expect(page.getByText("ID verified")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Verify my ID" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Upload your ID/ })).toHaveCount(0);
 });
 
 test("ops rejects an ID with a reason; the affiliate sees it and can upload again", async ({ page }) => {
@@ -86,8 +90,9 @@ test("ops rejects an ID with a reason; the affiliate sees it and can upload agai
   await logout(page);
 
   await login(page, "affiliate06@opengrowth.local");
+  await page.goto("/account");
   await expect(page.getByText("ID rejected: upload again")).toBeVisible();
-  await page.getByRole("link", { name: "Verify my ID" }).click();
+  await page.getByRole("link", { name: /Upload your ID/ }).click();
   await expect(page.getByText("Photo unreadable or cut off")).toBeVisible();
 });
 

@@ -47,8 +47,11 @@ test("an employee cannot open the payout run", async ({ page }) => {
   await expect(page).toHaveURL("/desk");
 });
 
-test("an affiliate sees their referral code", async ({ page }) => {
+test("an affiliate sees their referral code on their profile, not the dashboard", async ({ page }) => {
   await login(page, "affiliate02@opengrowth.local");
+  await expect(page.getByRole("region", { name: "Referral code" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Account verification" })).toHaveCount(0);
+  await page.goto("/account");
   await expect(page.getByText("OG-A02", { exact: true })).toBeVisible();
   await expect(page.getByText("/r/OG-A02")).toBeVisible();
   await expect(page.getByText("ID verified")).toBeVisible();

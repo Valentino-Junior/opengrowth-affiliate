@@ -3,7 +3,7 @@ import { changePasswordAction, updateNameAction, updatePayoutAction } from "@/ap
 import { requireRole } from "@/lib/auth";
 import { methodLabel } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
-import { CopyText } from "@/components/copy-text";
+import { CopyCode } from "@/components/copy-code";
 import { PayoutFields } from "@/components/payout-fields";
 import { Avatar, displayName } from "@/components/avatar";
 import { Field } from "@/components/field";
@@ -12,6 +12,7 @@ import { Card, PageTitle, Pill } from "@/components/ui";
 import { IdStatusPill } from "@/components/id-status";
 import { getSettings } from "@/lib/settings";
 import { formatCents } from "@/lib/money";
+import { appOrigin } from "@/lib/origin";
 
 export const metadata = { title: "My profile · Opengrowth" };
 
@@ -30,6 +31,7 @@ export default async function AccountPage() {
   const user = await requireRole(["affiliate", "employee", "ops", "admin"]);
   const a = user.affiliate;
   const settings = await getSettings();
+  const referralLink = a?.referralCode ? `${await appOrigin()}/r/${a.referralCode}` : null;
   const name = displayName(user);
   const nameLocked = !!a && (a.idStatus === "verified" || a.idStatus === "submitted");
 
@@ -65,14 +67,6 @@ export default async function AccountPage() {
             </dd>
             <dt className="text-muted">Phone</dt>
             <dd className="m-0">{user.phone}</dd>
-            {a?.referralCode ? (
-              <>
-                <dt className="text-muted">OG code</dt>
-                <dd className="m-0">
-                  <CopyText text={a.referralCode} label="OG code" className="text-gold" />
-                </dd>
-              </>
-            ) : null}
             {a ? (
               <>
                 <dt className="text-muted">Paid by</dt>
@@ -95,6 +89,22 @@ export default async function AccountPage() {
           </dl>
         </div>
       </Card>
+
+      {a?.referralCode && referralLink ? (
+        <Card className="flex flex-wrap items-center justify-between gap-4" aria-label="Referral code">
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-[13px] font-semibold text-muted">Your referral code</span>
+            <span className="font-serif text-3xl font-bold text-gold">{a.referralCode}</span>
+            <span className="text-sm text-muted">
+              New players give this code to our team, or sign up with your link: <span className="font-semibold break-all text-ink">{referralLink}</span>
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <CopyCode code={a.referralCode} />
+            <CopyCode code={referralLink} label="Copy link" variant="ghost" />
+          </div>
+        </Card>
+      ) : null}
 
       <div className="flex flex-col gap-7 lg:flex-row lg:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-7">

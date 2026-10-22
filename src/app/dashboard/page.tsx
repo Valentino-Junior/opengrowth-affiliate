@@ -2,16 +2,13 @@ import Link from "next/link";
 import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { activePlayerCount, lastPayout, payoutHistory, playersForWeek, statusBadge } from "@/lib/affiliate-stats";
 import { formatCents, formatRate } from "@/lib/money";
-import { appOrigin } from "@/lib/origin";
 import { monthLabel, prizeNames, standings } from "@/lib/race";
 import { getSettings } from "@/lib/settings";
 import { liveWeekTotals } from "@/lib/transactions";
 import { formatWeekRange, localDay } from "@/lib/weeks";
-import { CopyCode } from "@/components/copy-code";
 import { EmailNotice } from "@/components/email-notice";
 import { MathStrip, PayoutHistory, PlayersTable, StatusBadge } from "@/components/dashboard-bits";
-import { Card, PageTitle, Pill, Stat } from "@/components/ui";
-import { IdStatusPill } from "@/components/id-status";
+import { Card, PageTitle, Stat } from "@/components/ui";
 
 /** "A car" → "a car", "An iPhone" → "an iPhone": prize names read mid-sentence. */
 const inSentence = (prize: string) => prize.replace(/^(A|An|The) /, (m) => m.toLowerCase());
@@ -42,7 +39,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     );
 
   const month = `${localDay(new Date()).slice(0, 7)}-01`;
-  const [live, badge, last, active, table, history, prizes, referralLink] = await Promise.all([
+  const [live, badge, last, active, table, history, prizes] = await Promise.all([
     liveWeekTotals(affiliate.id),
     statusBadge(affiliate.id, settings),
     lastPayout(affiliate.id),
@@ -50,7 +47,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     standings(month),
     payoutHistory(affiliate.id, 4),
     prizeNames(),
-    appOrigin().then((o) => `${o}/r/${affiliate.referralCode}`),
   ]);
   const weekPlayers = await playersForWeek(affiliate.id, live.bounds);
 
@@ -60,7 +56,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const third = table[2];
   const gapTo3rd = me && third && me.rank > 3 ? third.grossCents - me.grossCents : null;
 
-  const idPill = <IdStatusPill status={affiliate.idStatus} />;
 
   return (
     <>
@@ -137,37 +132,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           ) : null}
           {table.length === 0 ? <li className="text-sm text-muted">No verified profit yet this month.</li> : null}
         </ol>
-      </Card>
-
-      <Card className="flex flex-wrap items-center justify-between gap-4" aria-label="Account verification">
-        <div className="flex flex-col gap-2">
-          <h2 className="m-0 text-xl font-extrabold">Account verification</h2>
-          <div className="flex flex-wrap gap-2">
-            <Pill tone={user.emailVerifiedAt ? "green" : "gold"}>{user.emailVerifiedAt ? "Email confirmed" : "Email not confirmed"}</Pill>
-            <Pill tone={user.phoneVerifiedAt ? "green" : "gold"}>{user.phoneVerifiedAt ? "Phone confirmed" : "Phone not confirmed"}</Pill>
-            {idPill}
-          </div>
-          <span className="text-xs text-muted">Needed for payouts over {formatCents(settings.idThresholdCents, { whole: true })} and Top 3 prizes.</span>
-        </div>
-        {affiliate.idStatus === "none" || affiliate.idStatus === "rejected" ? (
-          <Link href="/dashboard/verify" className="rounded-full bg-gold px-5 py-2.5 text-sm font-bold text-bg no-underline">
-            Verify my ID
-          </Link>
-        ) : null}
-      </Card>
-
-      <Card className="flex flex-wrap items-center justify-between gap-4" aria-label="Referral code">
-        <div className="flex flex-col gap-1">
-          <span className="text-[13px] font-semibold text-muted">Your referral code</span>
-          <span className="font-serif text-3xl font-bold text-gold">{affiliate.referralCode}</span>
-          <span className="text-sm text-muted">
-            New players give this code to our team, or sign up with your link: <span className="font-semibold break-all text-ink">{referralLink}</span>
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <CopyCode code={affiliate.referralCode} />
-          <CopyCode code={referralLink} label="Copy link" variant="ghost" />
-        </div>
       </Card>
 
       <div className="flex flex-wrap gap-7">

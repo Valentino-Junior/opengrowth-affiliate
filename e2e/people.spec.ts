@@ -85,6 +85,7 @@ test("ops registers an affiliate, who can log in with the temporary password", a
 
   await login(page, "riley@example.com", temp);
   await expect(page).toHaveURL("/dashboard");
+  await page.goto("/account");
   await expect(page.getByText("OG-A07", { exact: true })).toBeVisible();
 });
 
