@@ -37,7 +37,7 @@ export default async function AccountPage() {
 
   return (
     <>
-      <PageTitle eyebrow="MY PROFILE" title="My profile" lead="Your details as the team sees them, and the settings you can change yourself." />
+      <PageTitle eyebrow={ROLE_LABEL[user.role].toUpperCase()} title="My profile" lead="Your details as the team sees them, and the settings you can change yourself." />
 
       <Card aria-label="Profile" className="flex flex-wrap items-center gap-6">
         <Avatar name={name} size="lg" />
