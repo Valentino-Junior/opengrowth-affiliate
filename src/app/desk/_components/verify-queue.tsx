@@ -13,7 +13,7 @@ import { EmptyRow, Table, Td, Th } from "@/components/table";
 export function StatusPill({ status, reason }: { status: TxStatus; reason?: string | null }) {
   if (status === "verified") return <Pill tone="green">Verified</Pill>;
   if (status === "rejected") return <Pill tone="orange">Rejected{reason ? `: ${reason}` : ""}</Pill>;
-  return <Pill tone="grey">Pending</Pill>;
+  return <Pill tone="blue">Pending</Pill>; // in progress: waiting for a second employee
 }
 
 const entryInclude = {
