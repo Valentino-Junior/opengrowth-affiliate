@@ -14,7 +14,7 @@ export async function SiteFooter() {
           OG
         </span>
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm">
-          <Link href="/" className="text-muted no-underline hover:text-ink">
+          <Link href="/#how-it-works" className="text-muted no-underline hover:text-ink">
             How it works
           </Link>
           <Link href="/#rules" className="text-muted no-underline hover:text-ink">

@@ -109,7 +109,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             Top 3 affiliates by gross profit this month win {inSentence(prizes[0])}, {inSentence(prizes[1])} or {inSentence(prizes[2])}. On top of your {rate}. Winners verify
             ID before prizes are released.
           </p>
-          <Link href="/#race" className="text-sm font-bold text-gold">
+          <Link href="/dashboard/how-it-works#race" className="text-sm font-bold text-gold">
             See the prizes and rules
           </Link>
         </div>

@@ -21,7 +21,7 @@ function navFor(area: Area, role: Role): NavItem[] {
         { href: "/dashboard", label: "Dashboard" },
         { href: "/dashboard/players", label: "My players" },
         { href: "/dashboard/payouts", label: "Payouts" },
-        { href: "/", label: "How it works" },
+        { href: "/dashboard/how-it-works", label: "How it works" },
       ];
     case "desk":
       return [
