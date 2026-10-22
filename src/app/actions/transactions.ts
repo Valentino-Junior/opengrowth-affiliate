@@ -8,7 +8,15 @@ import { attempt, RuleError, type ActionState } from "@/lib/errors";
 import { PAYMENT_METHODS } from "@/lib/labels";
 import { dollarsToCents, formatCents } from "@/lib/money";
 import { putImage } from "@/lib/storage";
-import { editVerifiedTransaction, logTransaction, rejectTransaction, verifyTransaction } from "@/lib/transactions";
+import {
+  DUPLICATE_REASON,
+  dismissRejection,
+  editVerifiedTransaction,
+  fixHref,
+  logTransaction,
+  rejectTransaction,
+  verifyTransaction,
+} from "@/lib/transactions";
 import { zonedLocalToDate } from "@/lib/weeks";
 import { db } from "@/lib/db";
 import { notify } from "@/lib/notifications";
@@ -46,11 +54,16 @@ export async function logTransactionAction(_prev: ActionState, form: FormData): 
     const screenshotKey = await putImage("screenshots", form.get("screenshot") as File | null, "Payment screenshot");
 
     const { player, entry } = await logTransaction(
-      { type, method, amountCents, occurredAt, playerHandle: str(form, "playerHandle"), externalRef: str(form, "externalRef"), screenshotKey },
+      { type, method, amountCents, occurredAt, playerHandle: str(form, "playerHandle"), externalRef: str(form, "externalRef"), screenshotKey, replacesId: str(form, "replacesId") || null },
       user.id,
+      user.role,
     );
     revalidatePath("/desk", "layout");
-    return { message: `Logged ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.` };
+    return {
+      message: entry.replacesId
+        ? `Logged the corrected ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.`
+        : `Logged ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.`,
+    };
   });
 }
 
@@ -78,8 +91,8 @@ export async function rejectTransactionAction(_prev: ActionState, form: FormData
       await notify([entry.enteredBy], {
         kind: "entry_rejected",
         title: `Your ${formatCents(entry.amountCents)} ${entry.type} for ${entry.player.handle} was rejected`,
-        body: `Reason: ${reason}. Fix it and log it again.`,
-        href: "/desk/log",
+        body: reason === DUPLICATE_REASON ? `Reason: ${reason}. Nothing to redo: dismiss it.` : `Reason: ${reason}. Fix it and log it again.`,
+        href: fixHref(id),
       });
   });
   if (result.error) return result;
@@ -104,5 +117,13 @@ export async function editTransactionAction(_prev: ActionState, form: FormData):
     revalidatePath(`/desk/entries/${id}`);
     revalidatePath("/desk", "layout");
     return { message: "Entry updated. The change is in the history below." };
+  });
+}
+
+export async function dismissRejectionAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireRole(AREA_ROLES.desk);
+  return attempt(async () => {
+    await dismissRejection(str(form, "transactionId"), user);
+    revalidatePath("/desk", "layout");
   });
 }

@@ -44,6 +44,12 @@ export default async function EntryPage({ params }: { params: Promise<{ id: stri
   const mine = entry.enteredBy === user.id;
   const canReview = entry.status === "pending" && !mine;
   const canEdit = entry.status === "verified" && (user.role === "ops" || user.role === "admin");
+  // A re-logged entry and the rejected one it corrects point at each other.
+  const correctedBy = await db.transaction.findFirst({ where: { replacesId: entry.id }, select: { id: true } });
+  const followUp: [string, React.ReactNode][] = [];
+  if (entry.replacesId) followUp.push(["Corrects", <Link key="c" href={`/desk/entries/${entry.replacesId}`} className="text-gold">the rejected entry</Link>]);
+  if (correctedBy) followUp.push(["Corrected by", <Link key="cb" href={`/desk/entries/${correctedBy.id}`} className="text-gold">a new entry</Link>]);
+  else if (entry.status === "rejected" && entry.rejectionHandledAt) followUp.push(["Sent back", `Dismissed ${formatDateTime(entry.rejectionHandledAt)}`]);
   const rows: [string, React.ReactNode][] = [
     ["Status", <StatusPill key="s" status={entry.status} reason={entry.rejectReason} />],
     ["Type", <span key="t" className="capitalize">{entry.type}</span>],
@@ -56,6 +62,7 @@ export default async function EntryPage({ params }: { params: Promise<{ id: stri
     ["Logged", `${formatDateTime(entry.createdAt)} by ${name(entry.enteredBy)}`],
     ...(entry.verifiedAt ? ([["Verified", `${formatDateTime(entry.verifiedAt)} by ${name(entry.verifiedBy)}`]] as [string, string][]) : []),
     ...(entry.week ? ([["Counts in week", formatWeekRange({ startsOn: day(entry.week.startsOn), endsOn: day(entry.week.endsOn) })]] as [string, string][]) : []),
+    ...followUp,
   ];
 
   return (

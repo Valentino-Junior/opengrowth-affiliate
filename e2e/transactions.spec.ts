@@ -82,6 +82,28 @@ test("a rejection needs a reason and goes back to whoever logged it", async ({ p
   await page.goto("/desk/log");
   const back = page.getByRole("heading", { name: "Sent back to you" }).locator("..");
   await expect(back.getByText("Wrong amount")).toBeVisible();
+  await expect(back.getByRole("link", { name: "Fix and log again" })).toBeVisible();
+  // Nothing to redo this time: dismiss it, and the box goes away.
+  await back.getByRole("button", { name: /^Dismiss player07/ }).click();
+  await expect(page.getByRole("heading", { name: "Sent back to you" })).toHaveCount(0);
+});
+
+test("a duplicate rejection can only be dismissed, never logged twice", async ({ page }) => {
+  // player12's $450 cashout was logged by A2; A1 rejects it as a duplicate.
+  await login(page, "a1@opengrowth.local");
+  await page.goto("/desk/queue");
+  await page.getByRole("link", { name: "Verify player12 cashout $450.00" }).click();
+  await page.locator("#reject").getByLabel("Reason").selectOption("Duplicate entry");
+  await page.locator("#reject").getByRole("button", { name: "Reject entry" }).click();
+  await logout(page);
+
+  await login(page, "a2@opengrowth.local");
+  await page.goto("/desk/log");
+  const back = page.getByRole("heading", { name: "Sent back to you" }).locator("..");
+  await expect(back.getByText("Duplicate entry")).toBeVisible();
+  await expect(back.getByRole("link", { name: "Fix and log again" })).toHaveCount(0);
+  await back.getByRole("button", { name: /^Dismiss player12/ }).click();
+  await expect(page.getByRole("heading", { name: "Sent back to you" })).toHaveCount(0);
 });
 
 test("a payment reference can't be logged twice; a non-image is refused", async ({ page }) => {

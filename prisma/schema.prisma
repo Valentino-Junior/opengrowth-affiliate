@@ -284,6 +284,11 @@ model Transaction {
   verifiedBy    String?       @map("verified_by") @db.Uuid
   verifiedAt    DateTime?     @map("verified_at") @db.Timestamptz
   rejectReason  String?       @map("reject_reason")
+  /// A rejected entry is "handled" once its logger re-logs it correctly or dismisses it.
+  rejectionHandledAt DateTime? @map("rejection_handled_at") @db.Timestamptz
+  rejectionHandledBy String?   @map("rejection_handled_by") @db.Uuid
+  /// Set on a re-logged entry: the rejected entry it corrects.
+  replacesId    String?       @map("replaces_id") @db.Uuid
   weekId        String?       @map("week_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz
@@ -296,6 +301,7 @@ model Transaction {
   @@index([method, externalRef]) // unique while not rejected: partial index in migration
   @@index([status])
   @@index([affiliateId, occurredAt])
+  @@index([replacesId])
   @@map("transactions")
 }
 

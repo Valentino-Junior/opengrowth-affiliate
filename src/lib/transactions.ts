@@ -44,9 +44,33 @@ export type NewEntry = {
   externalRef: string;
   screenshotKey: string;
   occurredAt: Date;
+  /** Re-logging a rejected entry correctly: the rejected entry this one replaces. */
+  replacesId?: string | null;
 };
 
-export async function logTransaction(input: NewEntry, enteredBy: string) {
+/** A rejection with this reason means the money is already in the books: dismiss it, don't log it again. */
+export const DUPLICATE_REASON = "Duplicate entry";
+
+/** Where the logger fixes a rejected entry; also the link in its notification. */
+export const fixHref = (id: string) => `/desk/log?fix=${id}`;
+
+/** The rejected entry someone may still fix or dismiss: theirs (or any, for ops), rejected, not yet handled. */
+async function openRejection(tx: Tx, id: string, actor: { id: string; role: Role }) {
+  const original = await tx.transaction.findUnique({ where: { id } });
+  if (!original || original.status !== "rejected") throw new RuleError("That entry isn't waiting to be fixed.");
+  if (original.rejectionHandledAt) throw new RuleError("That rejected entry was already dealt with.");
+  if (original.enteredBy !== actor.id && actor.role !== "ops" && actor.role !== "admin")
+    throw new RuleError("Only the person who logged it (or ops) can fix or dismiss it.");
+  return original;
+}
+
+async function closeRejection(tx: Tx, id: string, by: string, enteredBy: string) {
+  await tx.transaction.update({ where: { id }, data: { rejectionHandledAt: new Date(), rejectionHandledBy: by } });
+  // Its bell notification is done with too.
+  await tx.notification.updateMany({ where: { userId: enteredBy, href: fixHref(id), readAt: null }, data: { readAt: new Date() } });
+}
+
+export async function logTransaction(input: NewEntry, enteredBy: string, enteredByRole: Role = "employee") {
   if (input.amountCents <= 0n) throw new RuleError("Amount must be more than $0.");
   if (input.amountCents > MAX_AMOUNT_CENTS) throw new RuleError("Amount is over $100,000. Check it, or split it as it shows in the app.");
   if (input.occurredAt.getTime() > Date.now() + 5 * 60_000) throw new RuleError("The time can't be in the future.");
@@ -63,6 +87,9 @@ export async function logTransaction(input: NewEntry, enteredBy: string) {
       if (player.linkStatus === "pending" || player.linkStatus === "sent_to_ops")
         throw new RuleError(`${player.handle}'s affiliate link isn't confirmed yet. Confirm it before logging money.`);
 
+      const original = input.replacesId ? await openRejection(tx, input.replacesId, { id: enteredBy, role: enteredByRole }) : null;
+      if (original?.rejectReason === DUPLICATE_REASON) throw new RuleError("That entry was rejected as a duplicate: it's already logged. Dismiss it instead.");
+
       // A rejected link means the player has no affiliate: the entry is still logged, it just earns nobody commission.
       const affiliateId = player.linkStatus === "confirmed" ? player.affiliateId : null;
       const entry = await tx.transaction.create({
@@ -76,15 +103,17 @@ export async function logTransaction(input: NewEntry, enteredBy: string) {
           screenshotKey: input.screenshotKey,
           occurredAt: input.occurredAt,
           enteredBy,
+          replacesId: original?.id ?? null,
         },
       });
+      if (original) await closeRejection(tx, original.id, enteredBy, original.enteredBy);
       await tx.auditLog.create({
         data: {
           actorId: enteredBy,
           action: "transaction.log",
           entity: "transaction",
           entityId: entry.id,
-          after: { type: entry.type, amountCents: String(entry.amountCents), method: entry.method, externalRef, player: player.handle },
+          after: { type: entry.type, amountCents: String(entry.amountCents), method: entry.method, externalRef, player: player.handle, replaces: original?.id ?? null },
         },
       });
       return { entry, player };
@@ -94,6 +123,15 @@ export async function logTransaction(input: NewEntry, enteredBy: string) {
       throw new RuleError("This transaction ID is already logged for that payment method. Check the verify queue.");
     throw e;
   }
+}
+
+/** The logger (or ops) clears a rejected entry that doesn't need logging again (e.g. a duplicate). */
+export async function dismissRejection(id: string, actor: { id: string; role: Role }) {
+  await db.$transaction(async (tx) => {
+    const original = await openRejection(tx, id, actor);
+    await closeRejection(tx, original.id, actor.id, original.enteredBy);
+    await tx.auditLog.create({ data: { actorId: actor.id, action: "transaction.rejection_dismissed", entity: "transaction", entityId: id } });
+  });
 }
 
 export async function verifyTransaction(id: string, verifierId: string) {

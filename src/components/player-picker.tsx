@@ -7,11 +7,11 @@ import { useId, useMemo, useRef, useState } from "react";
 
 export type PickablePlayer = { handle: string; affiliate: string | null };
 
-export function PlayerPicker({ label, name, players }: { label: string; name: string; players: PickablePlayer[] }) {
+export function PlayerPicker({ label, name, players, defaultValue = "" }: { label: string; name: string; players: PickablePlayer[]; defaultValue?: string }) {
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(defaultValue);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
