@@ -14,6 +14,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle } from "@/components/ui";
 import { StatusPill } from "../../_components/verify-queue";
 import { ImageViewer } from "@/components/image-viewer";
+import { TxTypeLabel } from "@/components/tx-type";
 
 const REJECT_REASONS = ["Ref not found in the app", "Wrong amount", "Wrong payment method", "Wrong player", "Duplicate entry", "Screenshot doesn't match", "Other"];
 
@@ -52,7 +53,7 @@ export default async function EntryPage({ params }: { params: Promise<{ id: stri
   else if (entry.status === "rejected" && entry.rejectionHandledAt) followUp.push(["Sent back", `Dismissed ${formatDateTime(entry.rejectionHandledAt)}`]);
   const rows: [string, React.ReactNode][] = [
     ["Status", <StatusPill key="s" status={entry.status} reason={entry.rejectReason} />],
-    ["Type", <span key="t" className="capitalize">{entry.type}</span>],
+    ["Type", <TxTypeLabel key="t" type={entry.type} />],
     ["Amount", <span key="a" className="text-2xl font-extrabold">{formatCents(entry.amountCents)}</span>],
     ["Payment method", methodLabel(entry.method)],
     ["Transaction ID", <span key="r" className="font-mono">{entry.externalRef}</span>],

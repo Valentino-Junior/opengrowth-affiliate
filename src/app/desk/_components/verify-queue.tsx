@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { dismissRejectionAction } from "@/app/actions/transactions";
 import { DUPLICATE_REASON, fixHref } from "@/lib/transactions";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
+import { TxTypeLabel } from "@/components/tx-type";
 
 export function StatusPill({ status, reason }: { status: TxStatus; reason?: string | null }) {
   if (status === "verified") return <Pill tone="green">Verified</Pill>;
@@ -59,10 +60,10 @@ export async function VerifyQueue({ userId, since }: { userId: string; since: Da
               <Td>{formatTime(e.createdAt)}</Td>
               <Td className="font-semibold">{e.player.handle}</Td>
               <Td className="whitespace-nowrap">{e.affiliate?.legalName ?? <span className="text-muted">None</span>}</Td>
-              <Td className="capitalize">
-                {e.type}
+              <Td>
+                <TxTypeLabel type={e.type} />
                 {e.replacesId ? (
-                  <span className="ml-2 normal-case">
+                  <span className="ml-2">
                     <Pill tone="blue">Correction</Pill>
                   </span>
                 ) : null}
@@ -130,7 +131,7 @@ export async function MyRejected({ userId, fixingId }: { userId: string; fixingI
           return (
             <li key={e.id} className={`flex flex-wrap items-center gap-3 border-t border-line-gold py-3 text-sm first:border-t-0 ${e.id === fixingId ? "opacity-60" : ""}`}>
               <span className="font-semibold">{e.player.handle}</span>
-              <span className="capitalize">{e.type}</span>
+              <TxTypeLabel type={e.type} />
               <span className="font-bold">{formatCents(e.amountCents)}</span>
               <span className="text-muted">
                 {methodLabel(e.method)} · {e.externalRef}
