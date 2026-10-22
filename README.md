@@ -39,6 +39,9 @@ sudo -u postgres createdb -O opengrowth opengrowth_affiliate
 
 ### 3. Install the app and its settings (once)
 
+On a computer that doesn't have the project yet, download it first (run this in the folder where you keep projects,
+not inside an existing copy). If you already have the project folder, skip the first two lines and just `cd` into it.
+
 ```sh
 git clone https://github.com/Valentino-Junior/opengrowth-affiliate.git
 cd opengrowth-affiliate

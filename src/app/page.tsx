@@ -185,7 +185,6 @@ export default async function HowItWorksPage() {
           </div>
         </section>
       </main>
-      <footer className="mx-auto max-w-[1200px] px-4 pb-10 text-xs text-muted sm:px-8">Opengrowth by Young Money. All numbers update from the live rules.</footer>
     </>
   );
 }

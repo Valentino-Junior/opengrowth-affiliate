@@ -10,7 +10,7 @@ export default async function LoginPage() {
   if (user) redirect(homeFor(user.role));
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-8 px-4 py-16">
+    <main className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-8 px-4 py-16">
       <Brand />
       <div className="flex flex-col gap-2">
         <h1 className="m-0 font-serif text-4xl font-medium">Log in</h1>

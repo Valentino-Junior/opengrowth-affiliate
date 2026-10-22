@@ -16,7 +16,7 @@ export default async function PlayerSignupPage({ searchParams }: { searchParams:
   const valid = affiliate && (affiliate.status === "active" || affiliate.status === "flagged");
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-8 px-4 py-16">
+    <main className="mx-auto flex min-h-full max-w-xl flex-col justify-center gap-8 px-4 py-16">
       <Brand />
       <div className="flex flex-col gap-2">
         <h1 className="m-0 font-serif text-4xl font-medium">Join Young Money</h1>

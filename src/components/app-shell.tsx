@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Role } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions/auth";
@@ -66,11 +65,6 @@ export function AppShell({ area, user, children }: { area: Area; user: CurrentUs
         </div>
       </header>
       <main className="mx-auto flex max-w-[1200px] flex-col gap-7 px-4 pt-10 pb-16 sm:px-8">{children}</main>
-      <footer className="mx-auto max-w-[1200px] px-4 pb-10 text-xs text-muted sm:px-8">
-        <Link href="/" className="text-muted">
-          How it works
-        </Link>
-      </footer>
     </>
   );
 }
