@@ -82,6 +82,8 @@ test("money can't be logged for a player whose link isn't confirmed", async ({ p
   await page.getByLabel("Player handle").fill("unconfirmed1");
   await page.getByLabel("Email").fill("unconfirmed1@example.com");
   await page.getByLabel("Phone number").fill("555-070-0001");
+  await page.getByLabel("Pays with").selectOption("venmo");
+  await page.getByLabel("Payment handle").fill("@unconfirmed1");
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page.getByText("You're in.")).toBeVisible();
 

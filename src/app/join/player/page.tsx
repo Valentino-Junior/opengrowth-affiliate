@@ -4,6 +4,7 @@ import { ActionForm } from "@/components/action-form";
 import { Field } from "@/components/field";
 import { SubmitButton } from "@/components/submit-button";
 import { Brand } from "@/components/ui";
+import { PayoutFields } from "@/components/payout-fields";
 
 export const metadata = { title: "Join Young Money · Opengrowth" };
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function PlayerSignupPage({ searchParams }: { searchParams:
         <Field label="Player handle" name="handle" hint="The name you play under." required />
         <Field label="Email" name="email" type="email" autoComplete="email" required />
         <Field label="Phone number" name="phone" type="tel" autoComplete="tel" required />
-        <Field label="Payment handle" name="paymentHandle" placeholder="$cashtag, @venmo, wallet…" hint="The account you deposit from." />
+        <PayoutFields forPlayer emptyHint="The account you deposit from. Pick the app first." />
         <SubmitButton pendingText="Signing up…">Sign up</SubmitButton>
       </ActionForm>
     </main>

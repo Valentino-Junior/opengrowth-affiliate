@@ -7,6 +7,7 @@ import { Field } from "@/components/field";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
+import { PayoutFields } from "@/components/payout-fields";
 
 const REJECT_REASONS = [
   { value: "Already a player", label: "Already a player" },
@@ -109,13 +110,18 @@ export async function NewPlayers() {
       <div className="border-t border-line px-6 pt-5">
         <h3 className="m-0 text-base font-extrabold">Add a player who gave a code at the desk</h3>
         <p className="m-0 mt-1 mb-4 text-sm text-muted">The link is confirmed as you add it, unless the details match the affiliate.</p>
-        <ActionForm action={deskAddPlayerAction} resetOnSuccess className="grid items-end gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <ActionForm action={deskAddPlayerAction} resetOnSuccess className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Player handle" name="handle" required />
           <Field label="Referral code" name="referralCode" placeholder="OG-A01" required />
           <Field label="Email" name="email" type="email" />
           <Field label="Phone" name="phone" type="tel" />
-          <Field label="Payment handle" name="paymentHandle" />
-          <SubmitButton pendingText="Adding…">Add player</SubmitButton>
+          <div className="sm:col-span-2">
+            <PayoutFields forPlayer required={false} emptyHint="Optional. The account the player deposits from." />
+          </div>
+          {/* lines the button up with the inputs (label height + gap) */}
+          <div className="sm:col-span-2 sm:pt-[26px]">
+            <SubmitButton pendingText="Adding…">Add player</SubmitButton>
+          </div>
         </ActionForm>
       </div>
     </Card>

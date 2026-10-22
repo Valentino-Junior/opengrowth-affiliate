@@ -42,6 +42,10 @@ test("referral link → player signup → waiting on the desk", async ({ page })
   await page.getByLabel("Player handle").fill("linkplayer1");
   await page.getByLabel("Email").fill("linkplayer1@example.com");
   await page.getByLabel("Phone number").fill("555-040-0001");
+  // The handle hint follows the app.
+  await page.getByLabel("Pays with").selectOption("cash_app");
+  await expect(page.getByText("Your Cash App $cashtag, like $jordan23.")).toBeVisible();
+  await page.getByLabel("Payment handle").fill("$linkplayer1");
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page.getByText("You're in.")).toBeVisible();
 
@@ -54,6 +58,11 @@ test("one person, one account: player email already used", async ({ page }) => {
   await page.getByLabel("Player handle").fill("dupeplayer");
   await page.getByLabel("Email").fill("player05@example.com");
   await page.getByLabel("Phone number").fill("555-040-0099");
+  // Without an app the form doesn't send; it says what's missing.
+  await page.getByRole("button", { name: "Sign up" }).click();
+  await expect(page.getByText("Choose pays with.")).toBeVisible();
+  await page.getByLabel("Pays with").selectOption("cash_app");
+  await page.getByLabel("Payment handle").fill("$dupeplayer");
   await page.getByRole("button", { name: "Sign up" }).click();
   await expect(page.getByText("This email is already registered.")).toBeVisible();
 });
@@ -113,6 +122,7 @@ test("desk adds a walk-in whose payment handle is the affiliate's → straight t
   const form = page.locator("#new form").last();
   await form.getByLabel("Player handle").fill("walkin1");
   await form.getByLabel("Referral code").fill("OG-A02");
+  await form.getByLabel("Pays with").selectOption("crypto");
   await form.getByLabel("Payment handle").fill("$affiliate02");
   await form.getByRole("button", { name: "Add player" }).click();
   await expect(page.getByText("walkin1 matches Affiliate 02's own details. Sent to ops for review.")).toBeVisible();

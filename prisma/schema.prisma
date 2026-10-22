@@ -249,6 +249,7 @@ model Player {
   email           String?
   phone           String?
   paymentHandle   String?    @map("payment_handle")
+  paymentMethod   PaymentMethod? @map("payment_method") // the app the player deposits from
   affiliateId     String?    @map("affiliate_id") @db.Uuid
   linkSource      LinkSource? @map("link_source")
   linkStatus      LinkStatus @default(pending) @map("link_status")

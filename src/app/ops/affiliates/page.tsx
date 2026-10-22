@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
 import { IdStatusPill } from "@/components/id-status";
+import { PayoutFields } from "@/components/payout-fields";
 
 const statusTone = {
   pending_approval: "gold",
@@ -125,7 +126,7 @@ export default async function AffiliatesPage() {
           <ActionForm action={tagPlayerAction} resetOnSuccess className="flex flex-col gap-4">
             <Field label="Player handle" name="handle" required />
             <Field label="Referral code" name="referralCode" placeholder="OG-A01" required />
-            <Field label="Payment handle" name="paymentHandle" />
+            <PayoutFields forPlayer required={false} emptyHint="Optional. The account the player deposits from." />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Email" name="email" type="email" />
               <Field label="Phone" name="phone" type="tel" />

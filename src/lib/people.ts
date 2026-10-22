@@ -171,7 +171,13 @@ export async function declineAffiliate(affiliateId: string, actorId: string, rea
 
 // ---------- Players ----------
 
-export type NewPlayer = { handle: string; email?: string | null; phone?: string | null; paymentHandle?: string | null };
+export type NewPlayer = {
+  handle: string;
+  email?: string | null;
+  phone?: string | null;
+  paymentHandle?: string | null;
+  paymentMethod?: PaymentMethod | null;
+};
 
 /**
  * Creates a player linked to the affiliate behind `referralCode`.
@@ -227,6 +233,7 @@ export async function createLinkedPlayer(
           email,
           phone,
           paymentHandle,
+          paymentMethod: paymentHandle ? (input.paymentMethod ?? null) : null,
           affiliateId: affiliate.id,
           linkSource: opts.source,
           linkStatus,

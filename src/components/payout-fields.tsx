@@ -19,22 +19,43 @@ const HANDLE_HELP: Record<PaymentMethod, { hint: string; placeholder: string }> 
   crypto: { hint: "Your wallet address. Double-check it: crypto payments can't be reversed.", placeholder: "Wallet address" },
 };
 
-export function PayoutFields({ defaultMethod, defaultHandle }: { defaultMethod?: PaymentMethod | null; defaultHandle?: string | null }) {
+type Props = {
+  defaultMethod?: PaymentMethod | null;
+  defaultHandle?: string | null;
+  /** Players: "Pays with" / "Payment handle" (the account they deposit from). Default: an affiliate's payout. */
+  forPlayer?: boolean;
+  required?: boolean;
+  /** Hint shown before an app is picked. */
+  emptyHint?: string;
+};
+
+export function PayoutFields({ defaultMethod, defaultHandle, forPlayer = false, required = true, emptyHint }: Props) {
   const [method, setMethod] = useState<PaymentMethod | "">(defaultMethod ?? "");
-  const help = method ? HANDLE_HELP[method] : { hint: "Where your commission is sent. Pick how you get paid first.", placeholder: "" };
+  const empty = emptyHint ?? (forPlayer ? "The account the player deposits from. Pick the app first." : "Where your commission is sent. Pick how you get paid first.");
+  const help = method ? HANDLE_HELP[method] : { hint: empty, placeholder: "" };
+  const names = forPlayer
+    ? { method: "paymentMethod", handle: "paymentHandle", methodLabel: "Pays with", handleLabel: "Payment handle" }
+    : { method: "payoutMethod", handle: "payoutHandle", methodLabel: "Get paid by", handleLabel: "Payout handle" };
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Select
-        label="Get paid by"
-        name="payoutMethod"
+        label={names.methodLabel}
+        name={names.method}
         options={PAYMENT_METHODS}
-        placeholder="Choose…"
-        required
+        placeholder={required ? "Choose…" : "Not given"}
+        required={required}
         defaultValue={defaultMethod ?? ""}
         onChange={(e) => setMethod(e.currentTarget.value as PaymentMethod)}
       />
-      <Field label="Payout handle" name="payoutHandle" defaultValue={defaultHandle ?? ""} placeholder={help.placeholder} hint={help.hint} required />
+      <Field
+        label={names.handleLabel}
+        name={names.handle}
+        defaultValue={defaultHandle ?? ""}
+        placeholder={help.placeholder}
+        hint={help.hint}
+        required={required || method !== ""}
+      />
     </div>
   );
 }

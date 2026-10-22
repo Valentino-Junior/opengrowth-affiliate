@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import type { LinkSource } from "@prisma/client";
+import type { LinkSource, PaymentMethod } from "@prisma/client";
 import { AREA_ROLES, createSession, hashPassword, requireRole } from "@/lib/auth";
 import {
   approveAffiliate,
@@ -129,18 +129,27 @@ const playerSchema = z.object({
   email: z.union([z.literal(""), z.string().email("Enter a valid email")]),
   phone: z.union([z.literal(""), phoneSchema]),
   paymentHandle: z.string(),
+  paymentMethod: z.union([z.literal(""), z.enum(methodValues)]),
 });
 
 async function addPlayer(form: FormData, source: LinkSource, actorId: string | null): Promise<ActionState> {
   const parsed = playerSchema.safeParse(
-    Object.fromEntries(["handle", "referralCode", "email", "phone", "paymentHandle"].map((k) => [k, str(form, k)])),
+    Object.fromEntries(["handle", "referralCode", "email", "phone", "paymentHandle", "paymentMethod"].map((k) => [k, str(form, k)])),
   );
   if (!parsed.success) return firstIssue(parsed.error);
   if (source === "link" && (!parsed.data.email || !parsed.data.phone))
     return { error: "Enter your email and phone number" };
+  const { paymentHandle, paymentMethod } = parsed.data;
+  if (source === "link" && (!paymentMethod || !paymentHandle)) return { error: "Pick the app you deposit from and enter your handle on it" };
+  if (paymentHandle && !paymentMethod) return { error: "Pick which app that payment handle is on" };
+  if (paymentMethod && !paymentHandle) return { error: "Enter the payment handle for that app" };
 
   return attempt(async () => {
-    const { player, affiliate, reasons } = await createLinkedPlayer(parsed.data, parsed.data.referralCode, { source, actorId });
+    const { player, affiliate, reasons } = await createLinkedPlayer(
+      { ...parsed.data, paymentMethod: (paymentMethod || null) as PaymentMethod | null },
+      parsed.data.referralCode,
+      { source, actorId },
+    );
     revalidatePath("/desk");
     revalidatePath("/ops/verification");
     if (source === "link") return { message: "You're in. Give your handle to the team when you make your first deposit." };
