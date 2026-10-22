@@ -8,9 +8,8 @@ import { ActionForm } from "@/components/action-form";
 import { Field } from "@/components/field";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle } from "@/components/ui";
+import { FileField } from "@/components/file-field";
 
-const fileInput =
-  "rounded-[10px] border border-dashed border-line bg-bg px-3.5 py-3 text-sm font-normal text-muted file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-surface file:px-4 file:py-1.5 file:font-bold file:text-ink";
 
 export default async function VerifyIdPage() {
   const user = await requireRole(AREA_ROLES.affiliate);
@@ -54,16 +53,13 @@ export default async function VerifyIdPage() {
           <Card>
             <ActionForm action={submitIdAction} className="flex flex-col gap-5">
               <Field label="Your name exactly as it appears on the ID" name="nameOnId" defaultValue={affiliate.legalName} required />
-              <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
-                Photo of the front of your ID
-                <input type="file" name="front" accept="image/png,image/jpeg,image/webp" required className={fileInput} />
-                <span className="text-xs font-normal text-muted">Driver&apos;s license, state ID or passport. All four corners in the photo.</span>
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
-                Selfie holding the ID
-                <input type="file" name="selfie" accept="image/png,image/jpeg,image/webp" required className={fileInput} />
-                <span className="text-xs font-normal text-muted">Your face and the ID both clearly visible.</span>
-              </label>
+              <FileField
+                label="Photo of the front of your ID"
+                name="front"
+                hint="Driver's license, state ID or passport. All four corners in the photo."
+                required
+              />
+              <FileField label="Selfie holding the ID" name="selfie" hint="Your face and the ID both clearly visible." required />
               <label className="flex items-start gap-3 text-sm">
                 <input type="checkbox" name="consent" className="mt-0.5 h-4 w-4 accent-[#d4af5a]" />
                 This is my own ID. I understand the team will check it against my account and keep it private.

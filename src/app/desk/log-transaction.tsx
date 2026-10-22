@@ -6,6 +6,7 @@ import { Field } from "@/components/field";
 import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card } from "@/components/ui";
+import { FileField } from "@/components/file-field";
 
 export async function LogTransaction() {
   // Suggestions for the player field: players whose link is settled (confirmed, or rejected = no affiliate).
@@ -54,17 +55,14 @@ export async function LogTransaction() {
         <Select label="Payment method" name="method" options={PAYMENT_METHODS} placeholder="Choose…" required />
         <Field label="Transaction ID / reference" name="externalRef" autoComplete="off" required />
         <Field label="When (New York time)" name="occurredAt" type="datetime-local" hint="Leave empty for right now." />
-        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft sm:col-span-2 lg:col-span-3">
-          Payment screenshot
-          <input
-            type="file"
+        <div className="sm:col-span-2 lg:col-span-3">
+          <FileField
+            label="Payment screenshot"
             name="screenshot"
-            accept="image/png,image/jpeg,image/webp"
+            hint="Required. The verifier checks it against the entry. PNG, JPG or WebP up to 10 MB."
             required
-            className="rounded-[10px] border border-dashed border-line bg-bg px-3.5 py-3 text-sm font-normal text-muted file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-surface file:px-4 file:py-1.5 file:font-bold file:text-ink"
           />
-          <span className="text-xs font-normal text-muted">Required. The verifier checks it against the entry. PNG, JPG or WebP up to 10 MB.</span>
-        </label>
+        </div>
         <div className="sm:col-span-2 lg:col-span-3">
           <SubmitButton pendingText="Uploading…">Submit for verification</SubmitButton>
         </div>
