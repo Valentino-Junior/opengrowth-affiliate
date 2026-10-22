@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { copyToClipboard } from "./clipboard";
 import { Button } from "./ui";
 
 export function CopyCode({ code, label = "Copy code", variant = "gold" }: { code: string; label?: string; variant?: "gold" | "ghost" }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   return (
     <Button
       type="button"
       variant={variant}
       onClick={async () => {
-        await navigator.clipboard.writeText(code);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        setState((await copyToClipboard(code)) ? "copied" : "failed");
+        setTimeout(() => setState("idle"), 2500);
       }}
     >
-      {copied ? "Copied" : label}
+      {state === "copied" ? "Copied" : state === "failed" ? "Press Ctrl+C to copy" : label}
     </Button>
   );
 }
