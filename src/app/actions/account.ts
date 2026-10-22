@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser, hashPassword, revokeOtherSessions, verifyPassword } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { endAllSessions, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { attempt, RuleError, type ActionState } from "@/lib/errors";
 import { PAYMENT_METHODS } from "@/lib/labels";
@@ -51,8 +52,9 @@ export async function updateNameAction(_prev: ActionState, form: FormData): Prom
   });
 }
 
+/** On success everyone using this account is logged out, this browser too, and sent to log in with the new password. */
 export async function changePasswordAction(_prev: ActionState, form: FormData): Promise<ActionState> {
-  return attempt(async () => {
+  const result = await attempt(async () => {
     const user = await me();
     const current = String(form.get("currentPassword") ?? "");
     const next = String(form.get("newPassword") ?? "");
@@ -63,10 +65,11 @@ export async function changePasswordAction(_prev: ActionState, form: FormData): 
     if (next === current) throw new RuleError("Choose a password different from your current one.");
 
     await db.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(next) } });
-    await revokeOtherSessions(user.id);
     await db.auditLog.create({ data: { actorId: user.id, action: "account.password", entity: "user", entityId: user.id } });
-    return { message: "Password changed. You've been signed out on your other devices." };
+    await endAllSessions(user.id);
   });
+  if (result.error) return result;
+  redirect("/login?password=changed");
 }
 
 export async function updatePayoutAction(_prev: ActionState, form: FormData): Promise<ActionState> {

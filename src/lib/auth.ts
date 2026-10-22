@@ -41,10 +41,10 @@ export async function destroySession() {
   jar.delete(COOKIE);
 }
 
-/** Signs the user out everywhere except this browser (after a password change). */
-export async function revokeOtherSessions(userId: string) {
-  const token = (await cookies()).get(COOKIE)?.value;
-  await db.session.deleteMany({ where: { userId, ...(token ? { tokenHash: { not: hashToken(token) } } : {}) } });
+/** Signs the user out on every device, this browser included (after a password change). */
+export async function endAllSessions(userId: string) {
+  await db.session.deleteMany({ where: { userId } });
+  (await cookies()).delete(COOKIE);
 }
 
 export async function getCurrentUser() {

@@ -21,7 +21,7 @@ test("the header's profile button opens My profile with the account's details", 
   await expect(card.getByText("OG-A04")).toBeVisible();
 });
 
-test("change password: wrong current and mismatch are refused; the new one works; then put back", async ({ page }) => {
+test("change password: wrong current and mismatch are refused; success logs you out everywhere; then put back", async ({ page, browser }) => {
   const change = async (current: string, next: string, confirm = next) => {
     const form = page.getByLabel("Change password");
     await form.getByLabel("Current password").fill(current);
@@ -30,17 +30,41 @@ test("change password: wrong current and mismatch are refused; the new one works
     await form.getByRole("button", { name: "Change password" }).click();
     return form;
   };
+  // A second device, signed in before the change.
+  const other = await browser.newPage();
+  await login(other, "affiliate04@opengrowth.local");
+
   await login(page, "affiliate04@opengrowth.local");
   await page.goto("/account");
   await expect((await change("not-it", "newpass-123")).getByText("Your current password is wrong.")).toBeVisible();
   await expect((await change("opengrowth", "newpass-123", "other-pass")).getByText("The two new passwords don't match.")).toBeVisible();
-  await expect((await change("opengrowth", "newpass-123")).getByText(/^Password changed\./)).toBeVisible();
-  await logout(page);
+  await change("opengrowth", "newpass-123");
+  await expect(page).toHaveURL("/login?password=changed");
+  await expect(page.getByText("Password changed. Log in with your new password.")).toBeVisible();
+
+  // This browser and the other device are both logged out.
+  await page.goto("/account");
+  await expect(page).toHaveURL("/login");
+  await other.goto("/dashboard");
+  await expect(other).toHaveURL("/login");
+  await other.close();
 
   await login(page, "affiliate04@opengrowth.local", "newpass-123");
   await expect(page).toHaveURL("/dashboard");
   await page.goto("/account");
-  await expect((await change("newpass-123", "opengrowth")).getByText(/^Password changed\./)).toBeVisible();
+  await change("newpass-123", "opengrowth");
+  await expect(page).toHaveURL("/login?password=changed");
+});
+
+test("the payout handle hint follows the payment app", async ({ page }) => {
+  await page.goto("/join");
+  const handle = page.getByLabel("Payout handle");
+  await expect(page.getByText("Where your commission is sent. Pick how you get paid first.")).toBeVisible();
+  await page.getByLabel("Get paid by").selectOption("venmo");
+  await expect(page.getByText("Your Venmo username, like @jordan-23.")).toBeVisible();
+  await expect(handle).toHaveAttribute("placeholder", "@username");
+  await page.getByLabel("Get paid by").selectOption("crypto");
+  await expect(page.getByText(/Your wallet address\. Double-check it/)).toBeVisible();
 });
 
 test("payout details need the current password; then put back", async ({ page }) => {

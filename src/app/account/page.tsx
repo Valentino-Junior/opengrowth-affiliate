@@ -1,10 +1,10 @@
 import { changePasswordAction, updateNameAction, updatePayoutAction } from "@/app/actions/account";
 import { requireRole } from "@/lib/auth";
-import { PAYMENT_METHODS, methodLabel } from "@/lib/labels";
+import { methodLabel } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
+import { PayoutFields } from "@/components/payout-fields";
 import { Avatar, displayName } from "@/components/avatar";
 import { Field } from "@/components/field";
-import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
 
@@ -110,10 +110,7 @@ export default async function AccountPage() {
                 <p className="m-0 mt-1 text-sm text-muted">Where your Monday payout is sent. Confirm with your password, because this decides where money goes.</p>
               </div>
               <ActionForm action={updatePayoutAction} className="flex flex-col gap-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Select label="Get paid by" name="payoutMethod" options={PAYMENT_METHODS} defaultValue={a.payoutMethod ?? ""} placeholder="Choose…" required />
-                  <Field label="Payout handle" name="payoutHandle" defaultValue={a.payoutHandle ?? ""} placeholder="$yourcashtag" required />
-                </div>
+                <PayoutFields defaultMethod={a.payoutMethod} defaultHandle={a.payoutHandle} />
                 <Field label="Current password" name="currentPassword" type="password" autoComplete="current-password" required />
                 <div>
                   <SubmitButton pendingText="Saving…">Save payout details</SubmitButton>
@@ -126,7 +123,7 @@ export default async function AccountPage() {
           <Card aria-label="Change password" className="flex flex-col gap-4">
             <div>
               <h2 className="m-0 text-xl font-extrabold">Change password</h2>
-              <p className="m-0 mt-1 text-sm text-muted">At least 8 characters. You stay signed in here; other devices are signed out.</p>
+              <p className="m-0 mt-1 text-sm text-muted">At least 8 characters. Afterwards you&apos;re logged out everywhere and log in again with the new password.</p>
             </div>
             <ActionForm action={changePasswordAction} resetOnSuccess className="flex flex-col gap-4">
               <Field label="Current password" name="currentPassword" type="password" autoComplete="current-password" required />

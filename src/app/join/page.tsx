@@ -2,10 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser, homeFor } from "@/lib/auth";
 import { signupAffiliateAction } from "@/app/actions/people";
-import { PAYMENT_METHODS } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
+import { PayoutFields } from "@/components/payout-fields";
 import { Field } from "@/components/field";
-import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Brand } from "@/components/ui";
 
@@ -31,10 +30,7 @@ export default async function JoinPage() {
         <Field label="Email" name="email" type="email" autoComplete="email" required />
         <Field label="Phone number" name="phone" type="tel" autoComplete="tel" required />
         <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={8} required />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Select label="Get paid by" name="payoutMethod" options={PAYMENT_METHODS} placeholder="Choose…" required />
-          <Field label="Payout handle" name="payoutHandle" placeholder="$yourcashtag" required />
-        </div>
+        <PayoutFields />
         <SubmitButton pendingText="Creating account…">Create my account</SubmitButton>
       </ActionForm>
       <p className="m-0 text-center text-sm text-muted">
