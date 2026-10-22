@@ -8,12 +8,24 @@ import { useId, useState } from "react";
 //   instead of the browser's pop-up. The server re-checks everything; this is only for quick feedback.
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PICKER_TYPES = new Set(["date", "datetime-local", "time", "month", "week"]);
+
+/** Current wall-clock time in a time zone, as a datetime-local value ("2026-10-23T14:05"). */
+function nowIn(timeZone: string): string {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(new Date())
+      .map((x) => [x.type, x.value]),
+  );
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
 
 function messageFor(el: HTMLInputElement, label: string): string {
   const v = el.validity;
   if (v.valueMissing) return `Enter ${label.charAt(0).toLowerCase()}${label.slice(1)}.`;
   if (el.type === "email" && (v.typeMismatch || v.customError)) return "Enter a valid email address, like name@example.com.";
   if (v.tooShort) return `${label}: at least ${el.minLength} characters.`;
+  if (v.rangeOverflow && el.type === "datetime-local") return "That time is in the future. Pick when it actually happened.";
   if (v.typeMismatch && el.type === "url") return "Enter a full link starting with https://";
   return el.validationMessage;
 }
@@ -60,6 +72,20 @@ export function Field({
           onBlur={(e) => {
             checkEmail(e.currentTarget);
             input.onBlur?.(e);
+          }}
+          onClick={(e) => {
+            // Date/time fields: open the picker wherever the box is clicked, not only on the small icon.
+            const el = e.currentTarget;
+            // data-max-now="America/New_York": no time later than right now in that zone.
+            if (el.dataset.maxNow) el.max = nowIn(el.dataset.maxNow);
+            if (PICKER_TYPES.has(el.type) && !el.readOnly && !el.disabled) {
+              try {
+                el.showPicker();
+              } catch {
+                // older browsers: the normal typing behaviour still works
+              }
+            }
+            input.onClick?.(e);
           }}
           onInvalid={(e) => {
             e.preventDefault(); // no browser pop-up; show our message instead

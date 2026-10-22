@@ -48,7 +48,13 @@ export async function LogTransaction() {
         <Field label="Amount (USD)" name="amount" inputMode="decimal" placeholder="200.00" required />
         <Select label="Payment method" name="method" options={PAYMENT_METHODS} placeholder="Choose…" required />
         <Field label="Transaction ID / reference" name="externalRef" autoComplete="off" required />
-        <Field label="When (New York time)" name="occurredAt" type="datetime-local" hint="Leave empty for right now." />
+        <Field
+          label="When (New York time)"
+          name="occurredAt"
+          type="datetime-local"
+          hint="Click to pick the date and time. Leave empty for right now."
+          data-max-now="America/New_York"
+        />
         <div className="sm:col-span-2 lg:col-span-3">
           <FileField
             label="Payment screenshot"

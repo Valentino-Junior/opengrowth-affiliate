@@ -32,6 +32,12 @@ body {
   color: var(--color-ink);
 }
 
+/* The app is dark: tell the browser, so its built-in parts (date/time pickers, calendar icons,
+   dropdown menus, scrollbars) are drawn dark and stay visible. */
+:root {
+  color-scheme: dark;
+}
+
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
