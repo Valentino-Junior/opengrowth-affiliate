@@ -17,8 +17,10 @@ export default async function JoinPage() {
 
   return (
     <main className="mx-auto flex min-h-full max-w-xl flex-col justify-center gap-8 px-4 py-16">
-      <Brand />
-      <div className="flex flex-col gap-2">
+      <div className="flex justify-center">
+        <Brand />
+      </div>
+      <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="m-0 font-serif text-4xl font-medium">Become an affiliate</h1>
         <p className="m-0 text-muted">
           One person, one account. Use your own email and phone. The team approves new accounts and then issues your OG code.
@@ -35,7 +37,7 @@ export default async function JoinPage() {
         </div>
         <SubmitButton pendingText="Creating account…">Create my account</SubmitButton>
       </ActionForm>
-      <p className="m-0 text-sm text-muted">
+      <p className="m-0 text-center text-sm text-muted">
         Already have an account?{" "}
         <Link href="/login" className="text-gold">
           Log in
