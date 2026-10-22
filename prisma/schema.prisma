@@ -150,6 +150,7 @@ model User {
   staff     Staff?
   sessions  Session[]
   verificationCodes VerificationCode[]
+  notifications     Notification[]
 
   @@map("users")
 }
@@ -479,4 +480,22 @@ model EmailMessage {
 
   @@index([to, createdAt])
   @@map("email_messages")
+}
+
+/// In-app notifications (the bell in the top bar). Read ones are removed after 30 days by the worker.
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  kind      String
+  title     String
+  body      String?
+  href      String // where clicking it takes you
+  readAt    DateTime? @map("read_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

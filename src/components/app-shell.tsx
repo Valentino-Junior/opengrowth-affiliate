@@ -3,6 +3,7 @@ import type { Role } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions/auth";
 import { Avatar, displayName } from "./avatar";
+import { NotificationBell } from "./notification-bell";
 import { Brand } from "./ui";
 import { NavLinks, type NavItem } from "./nav-links";
 
@@ -58,6 +59,7 @@ export function AppShell({ area, user, children }: { area: Area; user: CurrentUs
             <NavLinks items={navFor(area, user.role)} />
           </div>
           <div className="flex items-center gap-3 text-sm">
+            <NotificationBell />
             <Link
               href="/account"
               aria-label={`My profile: ${name}`}

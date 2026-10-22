@@ -5,6 +5,9 @@ import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { attempt, type ActionState } from "@/lib/errors";
 import { formatCents } from "@/lib/money";
 import { closeDueWeeks, markPaid, setChecklistItem } from "@/lib/payouts";
+import { db } from "@/lib/db";
+import { notify } from "@/lib/notifications";
+import { formatWeekRange } from "@/lib/weeks";
 
 const str = (form: FormData, k: string) => String(form.get(k) ?? "").trim();
 
@@ -20,8 +23,17 @@ export async function closeDueWeeksAction(): Promise<ActionState> {
 export async function markPaidAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireRole(AREA_ROLES.ops);
   return attempt(async () => {
-    await markPaid(str(form, "rowId"), user.id, str(form, "paymentRef"));
+    const rowId = str(form, "rowId");
+    await markPaid(rowId, user.id, str(form, "paymentRef"));
     revalidatePath("/ops/payouts");
+    const row = await db.affiliateWeek.findUnique({ where: { id: rowId }, include: { affiliate: true, week: true } });
+    if (row)
+      await notify([row.affiliate.userId], {
+        kind: "paid",
+        title: `You were paid ${formatCents(row.payableCents)}`,
+        body: `For the week of ${formatWeekRange({ startsOn: row.week.startsOn.toISOString().slice(0, 10), endsOn: row.week.endsOn.toISOString().slice(0, 10) })}.`,
+        href: "/dashboard/payouts",
+      });
     return { message: `Paid ${formatCents(BigInt(str(form, "amountCents") || "0"))}.` };
   });
 }

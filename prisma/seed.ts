@@ -61,7 +61,7 @@ async function main() {
   if (process.env.NODE_ENV === "production") throw new Error("Refusing to seed a production database.");
 
   await db.$executeRawUnsafe(`
-    TRUNCATE email_messages, verification_codes, rate_limits, audit_log, settings, flags, race_results, race_months, affiliate_weeks, transaction_edits,
+    TRUNCATE notifications, email_messages, verification_codes, rate_limits, audit_log, settings, flags, race_results, race_months, affiliate_weeks, transaction_edits,
       transactions, weeks, players, id_documents, staff, affiliates, contact_registry, sessions, users CASCADE`);
 
   const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);

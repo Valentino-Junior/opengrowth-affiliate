@@ -10,6 +10,8 @@ import { dollarsToCents, formatCents } from "@/lib/money";
 import { putImage } from "@/lib/storage";
 import { editVerifiedTransaction, logTransaction, rejectTransaction, verifyTransaction } from "@/lib/transactions";
 import { zonedLocalToDate } from "@/lib/weeks";
+import { db } from "@/lib/db";
+import { notify } from "@/lib/notifications";
 
 const str = (form: FormData, k: string) => String(form.get(k) ?? "").trim();
 
@@ -68,8 +70,17 @@ export async function rejectTransactionAction(_prev: ActionState, form: FormData
   const reason = str(form, "reason") === "Other" ? str(form, "otherReason") : str(form, "reason");
   if (!reason) return { error: "Pick a reason (or describe it under Other)." };
   const result = await attempt(async () => {
-    await rejectTransaction(str(form, "transactionId"), user.id, reason);
+    const id = str(form, "transactionId");
+    await rejectTransaction(id, user.id, reason);
     revalidatePath("/desk", "layout");
+    const entry = await db.transaction.findUnique({ where: { id }, include: { player: true } });
+    if (entry)
+      await notify([entry.enteredBy], {
+        kind: "entry_rejected",
+        title: `Your ${formatCents(entry.amountCents)} ${entry.type} for ${entry.player.handle} was rejected`,
+        body: `Reason: ${reason}. Fix it and log it again.`,
+        href: "/desk/log",
+      });
   });
   if (result.error) return result;
   redirect("/desk/queue");

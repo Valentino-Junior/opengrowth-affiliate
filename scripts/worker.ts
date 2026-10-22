@@ -19,6 +19,7 @@ async function tick() {
     // Housekeeping: expired sessions and stale rate-limit windows.
     await db.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
     await db.rateLimit.deleteMany({ where: { windowStart: { lt: new Date(Date.now() - 2 * 3_600_000) } } });
+    await db.notification.deleteMany({ where: { readAt: { lt: new Date(Date.now() - 30 * 864e5) } } });
   } catch (e) {
     console.error("[worker] close failed:", e);
   }

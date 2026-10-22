@@ -12,7 +12,9 @@ import { db } from "./db";
 import { RuleError } from "./errors";
 import { getSettings, type Settings } from "./settings";
 import { countableFor, getOrCreateWeek } from "./transactions";
-import { localDay, weekFor } from "./weeks";
+import { formatWeekRange, localDay, weekFor } from "./weeks";
+import { formatCents } from "./money";
+import { MANAGEMENT, notifyRoles } from "./notifications";
 
 type Tx = Prisma.TransactionClient;
 
@@ -132,7 +134,17 @@ export async function closeDueWeeks(now = new Date()) {
     orderBy: { startsOn: "asc" },
   });
   const closed = [];
-  for (const w of due) closed.push(await closeWeek(w.id, null, now));
+  for (const w of due) {
+    const c = await closeWeek(w.id, null, now);
+    closed.push(c);
+    const ready = await db.affiliateWeek.aggregate({ where: { weekId: c.week.id, status: "ready" }, _sum: { payableCents: true }, _count: true });
+    await notifyRoles(MANAGEMENT, {
+      kind: "week_closed",
+      title: `Week of ${formatWeekRange({ startsOn: ymd(c.week.startsOn), endsOn: ymd(c.week.endsOn) })} closed`,
+      body: `${ready._count} payout${ready._count === 1 ? "" : "s"} ready, ${formatCents(ready._sum.payableCents ?? 0n)} to send.`,
+      href: "/ops/payouts",
+    });
+  }
   return closed;
 }
 

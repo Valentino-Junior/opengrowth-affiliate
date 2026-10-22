@@ -11,12 +11,11 @@ export default async function DeskOverviewPage() {
   // "Today" = since midnight, New York time.
   const since = zonedLocalToDate(`${localDay(new Date())}T00:00`);
 
-  const [waiting, newPlayers, verifiedByMe, rejectedByMe, sentBack] = await Promise.all([
+  const [waiting, newPlayers, verifiedByMe, rejectedByMe] = await Promise.all([
     db.transaction.count({ where: { status: "pending" } }),
     pendingPlayerCount(),
     db.transaction.count({ where: { status: "verified", verifiedBy: user.id, verifiedAt: { gte: since } } }),
     db.auditLog.count({ where: { action: "transaction.reject", actorId: user.id, at: { gte: since } } }),
-    db.transaction.count({ where: { enteredBy: user.id, status: "rejected", updatedAt: { gte: new Date(Date.now() - 7 * 864e5) } } }),
   ]);
 
   return (
@@ -40,16 +39,6 @@ export default async function DeskOverviewPage() {
           </Card>
         ) : null}
       </div>
-
-      {sentBack ? (
-        <Stat
-          label="Sent back to you"
-          value={String(sentBack)}
-          note={`${sentBack === 1 ? "An entry you logged was" : "Entries you logged were"} rejected. Fix and log again.`}
-          accent="gold"
-          href="/desk/log"
-        />
-      ) : null}
 
       <section aria-label="Shift numbers" className="grid grid-cols-2 gap-4 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
         <Stat label="Waiting for verification" value={String(waiting)} accent="gold" note="Open the verify queue" href="/desk/queue" />

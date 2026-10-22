@@ -23,6 +23,7 @@ import { LIMITS, allow, clientIp } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 import { approvedMessage, declinedMessage, welcomeMessage } from "@/lib/email";
 import { sendEmailCode } from "@/lib/verification";
+import { MANAGEMENT, STAFF_DESK, notify, notifyRoles } from "@/lib/notifications";
 
 const methodValues = PAYMENT_METHODS.map((m) => m.value) as [string, ...string[]];
 const str = (form: FormData, k: string) => String(form.get(k) ?? "").trim();
@@ -58,6 +59,7 @@ export async function signupAffiliateAction(_prev: ActionState, form: FormData):
     );
     await createSession(user.id);
     await sendEmailCode(user);
+    await notifyRoles(MANAGEMENT, { kind: "affiliate_signup", title: `${d.legalName} signed up as an affiliate`, body: "Waiting for your approval.", href: "/ops/affiliates" });
   });
   if (result.error) return result;
   redirect("/verify-email");
@@ -105,6 +107,7 @@ export async function approveAffiliateAction(_prev: ActionState, form: FormData)
     revalidatePath("/ops/affiliates");
     const owner = await db.user.findUniqueOrThrow({ where: { id: a.userId } });
     const sent = await approvedMessage(owner.email, a.legalName, a.referralCode!);
+    await notify([owner.id], { kind: "approved", title: `You're approved: your code is ${a.referralCode}`, body: "Share your code or link to start earning.", href: "/account" });
     return { message: `Approved: ${a.referralCode}.${sent.ok ? " We emailed them." : " The email couldn't be sent; tell them yourself."}` };
   });
 }
@@ -152,6 +155,20 @@ async function addPlayer(form: FormData, source: LinkSource, actorId: string | n
     );
     revalidatePath("/desk", "layout");
     revalidatePath("/ops/verification");
+    if (source === "link")
+      await notifyRoles(STAFF_DESK, {
+        kind: "player_signup",
+        title: `New player to confirm: ${player.handle}`,
+        body: `Came through ${affiliate.referralCode} (${affiliate.legalName}).`,
+        href: "/desk/new-players",
+      });
+    else if (reasons.length)
+      await notifyRoles(MANAGEMENT, {
+        kind: "flag",
+        title: `Possible self-referral: ${player.handle}`,
+        body: `Details match ${affiliate.legalName}'s own. Review the flag.`,
+        href: "/ops/verification",
+      });
     if (source === "link") return { message: "You're in. Give your handle to the team when you make your first deposit." };
     if (reasons.length) return { message: `${player.handle} matches ${affiliate.legalName}'s own details. Sent to ops for review.` };
     return { message: `${player.handle} is linked to ${affiliate.legalName} (${affiliate.referralCode}).` };
@@ -195,7 +212,15 @@ export async function rejectLinkAction(_prev: ActionState, form: FormData): Prom
 export async function sendToOpsAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireRole(AREA_ROLES.desk);
   return attempt(async () => {
-    await sendPlayerToOps(str(form, "playerId"), user.id);
+    const playerId = str(form, "playerId");
+    await sendPlayerToOps(playerId, user.id);
+    const sent = await db.player.findUnique({ where: { id: playerId }, include: { affiliate: true } });
+    await notifyRoles(MANAGEMENT, {
+      kind: "flag",
+      title: `Possible self-referral: ${sent?.handle ?? "a player"}`,
+      body: sent?.affiliate ? `The desk sent it to you. Details match ${sent.affiliate.legalName}'s own.` : "The desk sent it to you.",
+      href: "/ops/verification",
+    });
     revalidatePath("/desk", "layout");
     revalidatePath("/ops/verification");
   });
