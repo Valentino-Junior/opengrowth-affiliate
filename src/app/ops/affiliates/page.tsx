@@ -1,10 +1,10 @@
 import { approveAffiliateAction, declineAffiliateAction, registerAffiliateAction, tagPlayerAction } from "@/app/actions/people";
 import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { PAYMENT_METHODS, formatDateTime, methodLabel } from "@/lib/labels";
+import { formatDateTime, methodLabel } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
+import { ModalButton } from "@/components/modal-button";
 import { Field } from "@/components/field";
-import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
@@ -34,7 +34,42 @@ export default async function AffiliatesPage() {
 
   return (
     <>
-      <PageTitle eyebrow="OPS" title="Affiliates and players" lead={`${affiliates.length} affiliates · ${pending.length} waiting for approval`} />
+      <div className="flex flex-wrap items-end justify-between gap-5">
+        <PageTitle eyebrow="OPS" title="Affiliates and players" lead={`${affiliates.length} affiliates · ${pending.length} waiting for approval`} />
+        <div className="flex flex-wrap gap-3">
+          <ModalButton
+            label="Register affiliate"
+            title="Register a new affiliate"
+            description="One person, one account. Email and phone are checked against every existing affiliate and player."
+          >
+            <ActionForm action={registerAffiliateAction} resetOnSuccess className="flex flex-col gap-4">
+              <Field label="Full legal name" name="legalName" required />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Email" name="email" type="email" required />
+                <Field label="Phone number" name="phone" type="tel" required />
+              </div>
+              <PayoutFields required={false} emptyHint="Optional. Where their commission is sent." />
+              <div>
+                <SubmitButton pendingText="Checking…">Check and create code</SubmitButton>
+              </div>
+            </ActionForm>
+          </ModalButton>
+          <ModalButton label="Tag player" title="Tag a new player" description="Do this when the player signs up. Commission starts from their first deposit.">
+            <ActionForm action={tagPlayerAction} resetOnSuccess className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Player handle" name="handle" required />
+                <Field label="Referral code" name="referralCode" placeholder="OG-A01" required />
+                <Field label="Email" name="email" type="email" />
+                <Field label="Phone" name="phone" type="tel" />
+              </div>
+              <PayoutFields forPlayer required={false} emptyHint="Optional. The account the player deposits from." />
+              <div>
+                <SubmitButton pendingText="Linking…">Link player</SubmitButton>
+              </div>
+            </ActionForm>
+          </ModalButton>
+        </div>
+      </div>
 
       <Card id="approvals" tone={pending.length ? "gold" : "default"} className="flex flex-col gap-4 !px-0">
         <div className="px-6">
@@ -99,42 +134,6 @@ export default async function AffiliatesPage() {
           </tbody>
         </Table>
       </Card>
-
-      <div className="grid gap-7 lg:grid-cols-2">
-        <Card id="register" className="flex flex-col gap-4">
-          <div>
-            <h2 className="m-0 text-xl font-extrabold">Register a new affiliate</h2>
-            <p className="m-0 mt-1 text-sm text-muted">One person, one account. Email and phone are checked against every existing affiliate and player.</p>
-          </div>
-          <ActionForm action={registerAffiliateAction} resetOnSuccess className="flex flex-col gap-4">
-            <Field label="Full legal name" name="legalName" required />
-            <Field label="Email" name="email" type="email" required />
-            <Field label="Phone number" name="phone" type="tel" required />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Select label="Payout method" name="payoutMethod" options={PAYMENT_METHODS} placeholder="Later" />
-              <Field label="Payout handle" name="payoutHandle" />
-            </div>
-            <SubmitButton pendingText="Checking…">Check and create code</SubmitButton>
-          </ActionForm>
-        </Card>
-
-        <Card id="tag" className="flex flex-col gap-4">
-          <div>
-            <h2 className="m-0 text-xl font-extrabold">Tag a new player</h2>
-            <p className="m-0 mt-1 text-sm text-muted">Do this when the player signs up. Commission starts from their first deposit.</p>
-          </div>
-          <ActionForm action={tagPlayerAction} resetOnSuccess className="flex flex-col gap-4">
-            <Field label="Player handle" name="handle" required />
-            <Field label="Referral code" name="referralCode" placeholder="OG-A01" required />
-            <PayoutFields forPlayer required={false} emptyHint="Optional. The account the player deposits from." />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Email" name="email" type="email" />
-              <Field label="Phone" name="phone" type="tel" />
-            </div>
-            <SubmitButton pendingText="Linking…">Link player</SubmitButton>
-          </ActionForm>
-        </Card>
-      </div>
 
       <Card id="all" className="!px-0">
         <h2 className="m-0 mb-3 px-6 text-xl font-extrabold">All affiliates</h2>

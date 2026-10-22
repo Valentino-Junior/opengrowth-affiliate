@@ -73,7 +73,8 @@ test("one person, one account: player email already used", async ({ page }) => {
 test("ops registration blocks a phone already on another affiliate (mockup warning)", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
   await page.goto("/ops/affiliates");
-  const form = page.locator("#register");
+  await page.getByRole("button", { name: "Register affiliate" }).click();
+  const form = page.getByRole("dialog", { name: "Register a new affiliate" });
   await form.getByLabel("Full legal name").fill("Sam Example");
   await form.getByLabel("Email").fill("sam@example.com");
   await form.getByLabel("Phone number").fill("(555) 010-0003");
@@ -84,7 +85,8 @@ test("ops registration blocks a phone already on another affiliate (mockup warni
 test("ops registers an affiliate, who can log in with the temporary password", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
   await page.goto("/ops/affiliates");
-  const form = page.locator("#register");
+  await page.getByRole("button", { name: "Register affiliate" }).click();
+  const form = page.getByRole("dialog", { name: "Register a new affiliate" });
   await form.getByLabel("Full legal name").fill("Riley Fresh");
   await form.getByLabel("Email").fill("riley@example.com");
   await form.getByLabel("Phone number").fill("555-050-0001");

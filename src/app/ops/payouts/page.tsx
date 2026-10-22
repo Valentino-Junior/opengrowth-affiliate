@@ -12,7 +12,6 @@ import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill, Stat } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
 import { MarkPaid } from "./mark-paid";
-import { IdChecks } from "./id-checks";
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -227,7 +226,6 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
           </tbody>
         </Table>
       </Card>
-      <IdChecks weekId={week.id} thresholdCents={week.idThresholdCents ?? 0n} />
     </>
   );
 }

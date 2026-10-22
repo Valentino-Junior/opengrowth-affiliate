@@ -6,6 +6,7 @@ import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
 import { IdReview, PrizeRelease } from "./id-review";
+import { IdChecks } from "./id-checks";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
 
 export default async function VerificationPage() {
@@ -32,10 +33,13 @@ export default async function VerificationPage() {
       <PageTitle
         eyebrow="OPS"
         title="Verification"
-        lead="A flagged affiliate can't be paid or win a prize until the flag is cleared."
+        lead="Checking people: IDs to review, who still needs one, self-referral flags and prizes. A flagged affiliate can't be paid or win a prize until the flag is cleared."
       />
 
-      <Card tone={groups.size ? "gold" : "default"} className="!px-0">
+      <IdReview />
+      <IdChecks />
+
+      <Card id="flags" tone={groups.size ? "gold" : "default"} className="scroll-mt-8 !px-0">
         <div className="mb-3 px-6">
           <h2 className="m-0 text-xl font-extrabold">Open flags</h2>
           <p className="m-0 mt-1 text-sm text-muted">
@@ -123,7 +127,6 @@ export default async function VerificationPage() {
         </Table>
       </Card>
 
-      <IdReview />
       <PrizeRelease />
     </>
   );

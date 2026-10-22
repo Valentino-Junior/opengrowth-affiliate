@@ -15,7 +15,7 @@ async function login(page: import("@playwright/test").Page, email: string) {
 const roles = [
   { email: "affiliate01@opengrowth.local", home: "/dashboard", heading: "Welcome back, Affiliate" },
   { email: "a1@opengrowth.local", home: "/desk", heading: "Log it. Verify it. Then it counts." },
-  { email: "ops@opengrowth.local", home: "/ops/payouts", heading: /Week of|No closed weeks yet/ },
+  { email: "ops@opengrowth.local", home: "/ops", heading: "What needs you" },
   { email: "admin@opengrowth.local", home: "/admin/settings", heading: "Settings" },
 ];
 

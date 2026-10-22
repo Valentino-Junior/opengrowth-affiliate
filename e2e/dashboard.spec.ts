@@ -109,13 +109,10 @@ test("September prizes: release only to a verified, unflagged winner", async ({ 
   await expect(prizes.getByRole("row", { name: /Affiliate 02/ }).getByText("Released")).toBeVisible();
 });
 
-test("payout run lists ID checks for this month's top 3", async ({ page }) => {
+test("Verification lists who still needs an ID: this month's top 3", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/payouts");
-  const close = page.getByRole("button", { name: "Close week now" });
-  if (await close.count()) await close.click(); // another spec may have closed it already
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Week of/);
-  const checks = page.getByLabel("ID checks before release");
+  await page.goto("/ops/verification");
+  const checks = page.getByRole("region", { name: "Who still needs an ID" });
   await expect(checks.getByRole("row", { name: /Affiliate 06/ }).getByText("October 1st place: car")).toBeVisible();
   await expect(checks.getByRole("row", { name: /Affiliate 05/ }).getByText("On hold: flagged")).toBeVisible();
 });

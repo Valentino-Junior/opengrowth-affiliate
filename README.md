@@ -87,7 +87,7 @@ Every sample account uses the password **`opengrowth`**. Log in at http://localh
 | Role | Email | Where you land |
 | --- | --- | --- |
 | Admin (owner) | `admin@opengrowth.local` | Settings |
-| Ops manager | `ops@opengrowth.local` | Monday payout run |
+| Ops manager | `ops@opengrowth.local` | Ops overview (what needs you) |
 | Desk employees | `a1@opengrowth.local`, `a2@opengrowth.local`, `a3@opengrowth.local` | Transaction desk |
 | Affiliates | `affiliate01@opengrowth.local` … `affiliate06@opengrowth.local` | Affiliate dashboard |
 | New signup waiting for approval | `newcomer@example.com` | Dashboard (pending) |

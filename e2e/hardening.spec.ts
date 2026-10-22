@@ -74,3 +74,18 @@ test("favicon and app icons are the OG mark", async ({ page, request }) => {
   expect(icons.some((h) => h?.startsWith("/apple-icon.png"))).toBe(true);
   for (const path of ["/favicon.ico", "/icon.png", "/apple-icon.png"]) expect((await request.get(path)).status()).toBe(200);
 });
+
+test("ops overview: each card opens the tab where it's handled", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("ops@opengrowth.local");
+  await page.getByLabel("Password", { exact: true }).fill("opengrowth");
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL("/ops");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  for (const tab of ["Overview", "Payout run", "Verification", "Affiliates", "Transaction desk"]) await expect(nav.getByRole("link", { name: tab })).toBeVisible();
+  await page.getByRole("link", { name: /IDs to review/ }).click();
+  await expect(page).toHaveURL("/ops/verification#ids");
+  // The payout run is only about payouts now.
+  await page.goto("/ops/payouts");
+  await expect(page.getByRole("region", { name: "Who still needs an ID" })).toHaveCount(0);
+});
