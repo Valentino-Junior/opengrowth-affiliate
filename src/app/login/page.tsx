@@ -28,7 +28,7 @@ export default async function LoginPage() {
           </Link>
         </p>
         <Link href="/" className="text-muted">
-          ← Back to How it works
+          ← Back to home
         </Link>
       </div>
     </main>
