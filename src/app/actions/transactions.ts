@@ -47,7 +47,7 @@ export async function logTransactionAction(_prev: ActionState, form: FormData): 
       { type, method, amountCents, occurredAt, playerHandle: str(form, "playerHandle"), externalRef: str(form, "externalRef"), screenshotKey },
       user.id,
     );
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
     return { message: `Logged ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.` };
   });
 }
@@ -57,10 +57,10 @@ export async function verifyTransactionAction(_prev: ActionState, form: FormData
   if (form.get("checked") !== "on") return { error: "Tick the box once the amount, method and reference match the screenshot." };
   const result = await attempt(async () => {
     await verifyTransaction(str(form, "transactionId"), user.id);
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
   });
   if (result.error) return result;
-  redirect("/desk#queue");
+  redirect("/desk/queue");
 }
 
 export async function rejectTransactionAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -69,10 +69,10 @@ export async function rejectTransactionAction(_prev: ActionState, form: FormData
   if (!reason) return { error: "Pick a reason (or describe it under Other)." };
   const result = await attempt(async () => {
     await rejectTransaction(str(form, "transactionId"), user.id, reason);
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
   });
   if (result.error) return result;
-  redirect("/desk#queue");
+  redirect("/desk/queue");
 }
 
 export async function editTransactionAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -91,7 +91,7 @@ export async function editTransactionAction(_prev: ActionState, form: FormData):
       str(form, "reason"),
     );
     revalidatePath(`/desk/entries/${id}`);
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
     return { message: "Entry updated. The change is in the history below." };
   });
 }

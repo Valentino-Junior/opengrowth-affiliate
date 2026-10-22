@@ -19,12 +19,6 @@ export async function LogTransaction() {
 
   return (
     <Card id="log" className="flex flex-col gap-4">
-      <div>
-        <h2 className="m-0 text-xl font-extrabold">Log a transaction</h2>
-        <p className="m-0 mt-1 text-sm text-muted">
-          Enter it exactly as it shows in the payment app. It goes to the verify queue, not straight to the books.
-        </p>
-      </div>
       <ActionForm action={logTransactionAction} resetOnSuccess className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0">
           <legend className="mb-1.5 p-0 text-sm font-semibold text-ink-soft">Type</legend>

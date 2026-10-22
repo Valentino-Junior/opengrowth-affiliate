@@ -50,14 +50,23 @@ export function Card({
   );
 }
 
-export function Stat({ label, value, note, accent }: { label: string; value: string; note?: string; accent?: "gold" | "green" }) {
+/** A number card. With `href` the whole card is a link (e.g. to the screen where you act on it). */
+export function Stat({ label, value, note, accent, href }: { label: string; value: string; note?: string; accent?: "gold" | "green"; href?: string }) {
   const color = accent === "gold" ? "text-gold" : accent === "green" ? "text-green" : "text-ink";
-  return (
-    <div className="flex min-w-0 flex-col gap-2 rounded-card border border-line bg-surface p-4 sm:p-[22px]">
+  const body = (
+    <>
       <span className="text-[13px] font-semibold text-muted">{label}</span>
       <span className={`text-3xl font-extrabold sm:text-4xl ${color}`}>{value}</span>
       {note ? <span className="text-[13px] text-muted">{note}</span> : null}
-    </div>
+    </>
+  );
+  const box = "flex min-w-0 flex-col gap-2 rounded-card border border-line bg-surface p-4 sm:p-[22px]";
+  return href ? (
+    <Link href={href} className={`${box} no-underline transition hover:border-gold`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={box}>{body}</div>
   );
 }
 

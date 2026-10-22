@@ -5,6 +5,7 @@ import { login, logout } from "./helpers";
 
 test("desk confirms a clean player link (Player 22)", async ({ page }) => {
   await login(page, "a1@opengrowth.local");
+  await page.goto("/desk/new-players");
   const row = page.getByRole("row", { name: /player22/ });
   await expect(row.getByText("Unique").first()).toBeVisible();
   await row.getByRole("button", { name: "Confirm link" }).click();
@@ -13,6 +14,7 @@ test("desk confirms a clean player link (Player 22)", async ({ page }) => {
 
 test("self-referral: desk sends Player 23 to ops, ops clears it", async ({ page }) => {
   await login(page, "a2@opengrowth.local");
+  await page.goto("/desk/new-players");
   const row = page.getByRole("row", { name: /player23/ });
   await expect(row.getByText("Matches affiliate")).toBeVisible();
   await expect(row.getByRole("button", { name: "Confirm link" })).toHaveCount(0);
@@ -50,6 +52,7 @@ test("referral link → player signup → waiting on the desk", async ({ page })
   await expect(page.getByText("You're in.")).toBeVisible();
 
   await login(page, "a1@opengrowth.local");
+  await page.goto("/desk/new-players");
   await expect(page.getByRole("row", { name: /linkplayer1/ }).getByText("Affiliate 03")).toBeVisible();
 });
 
@@ -119,6 +122,7 @@ test("self-serve signup waits for approval, then gets a code", async ({ page }) 
 
 test("desk adds a walk-in whose payment handle is the affiliate's → straight to ops", async ({ page }) => {
   await login(page, "a3@opengrowth.local");
+  await page.goto("/desk/new-players");
   const form = page.locator("#new form").last();
   await form.getByLabel("Player handle").fill("walkin1");
   await form.getByLabel("Referral code").fill("OG-A02");

@@ -33,13 +33,7 @@ export async function VerifyQueue({ userId, since }: { userId: string; since: Da
   };
 
   return (
-    <Card id="queue" className="flex flex-col gap-4 !px-0">
-      <div className="px-6">
-        <h2 className="m-0 text-xl font-extrabold">Verify queue</h2>
-        <p className="m-0 mt-1 text-sm text-muted">
-          Check the amount, method and reference against the screenshot and the payment app. You can&apos;t verify your own entries.
-        </p>
-      </div>
+    <Card id="queue" className="flex flex-col gap-4 !px-0 !pt-2">
       <Table>
         <thead>
           <tr>

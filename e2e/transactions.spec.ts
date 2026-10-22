@@ -8,6 +8,7 @@ const receipt = path.join(__dirname, "fixtures/receipt.png");
 const fake = path.join(__dirname, "fixtures/fake.png");
 
 async function logEntry(page: Page, e: { type?: "Deposit" | "Cashout"; handle: string; amount: string; method: string; ref: string; file?: string }) {
+  if (!page.url().endsWith("/desk/log")) await page.goto("/desk/log");
   const form = page.locator("#log form");
   if (e.type === "Cashout") await form.getByText("Cashout", { exact: true }).click();
   await form.getByLabel("Player handle").fill(e.handle);
@@ -27,11 +28,13 @@ test("A1 logs, A2 verifies, Affiliate 01's live week goes up", async ({ page }) 
   await login(page, "a1@opengrowth.local");
   const form = await logEntry(page, { handle: "player13", amount: "250", method: "Venmo", ref: "VEN-777001" });
   await expect(form.getByText("Logged $250.00 deposit for player13. It's in the verify queue.")).toBeVisible();
+  await page.goto("/desk/queue");
   const mine = page.locator("#queue").getByRole("row", { name: /player13.*\$250\.00/ });
   await expect(mine.getByText("Needs another teammate")).toBeVisible();
   await logout(page);
 
   await login(page, "a2@opengrowth.local");
+  await page.goto("/desk/queue");
   await page.getByRole("link", { name: "Verify player13 deposit $250.00" }).click();
   await expect(page.getByRole("img", { name: /Payment screenshot for player13/ })).toBeVisible();
   // Box not ticked → refused.
@@ -39,7 +42,7 @@ test("A1 logs, A2 verifies, Affiliate 01's live week goes up", async ({ page }) 
   await expect(page.getByText("Tick the box once")).toBeVisible();
   await page.getByLabel(/match the screenshot/).check();
   await page.getByRole("button", { name: "Verify entry" }).click();
-  await expect(page).toHaveURL(/\/desk(#queue)?$/);
+  await expect(page).toHaveURL(/\/desk\/queue$/);
   await expect(page.locator("#queue").getByRole("row", { name: /player13.*\$250\.00/ }).getByText("Verified")).toBeVisible();
   await logout(page);
 
@@ -50,6 +53,7 @@ test("A1 logs, A2 verifies, Affiliate 01's live week goes up", async ({ page }) 
 
 test("nobody can verify their own entry", async ({ page }) => {
   await login(page, "a3@opengrowth.local");
+  await page.goto("/desk/queue");
   const row = page.locator("#queue").getByRole("row", { name: /player03.*\$600\.00/ });
   await expect(row.getByText("Needs another teammate")).toBeVisible();
   await expect(row.getByRole("link", { name: /Verify/ })).toHaveCount(0);
@@ -57,14 +61,16 @@ test("nobody can verify their own entry", async ({ page }) => {
 
 test("a rejection needs a reason and goes back to whoever logged it", async ({ page }) => {
   await login(page, "a2@opengrowth.local");
+  await page.goto("/desk/queue");
   await page.getByRole("link", { name: "Verify player07 deposit $200.00" }).click();
   const reject = page.locator("#reject");
   await reject.getByLabel("Reason").selectOption("Wrong amount");
   await reject.getByRole("button", { name: "Reject entry" }).click();
-  await expect(page).toHaveURL(/\/desk(#queue)?$/);
+  await expect(page).toHaveURL(/\/desk\/queue$/);
   await logout(page);
 
   await login(page, "a1@opengrowth.local");
+  await page.goto("/desk/log");
   const back = page.getByRole("heading", { name: "Sent back to you" }).locator("..");
   await expect(back.getByText("Wrong amount")).toBeVisible();
 });
@@ -94,6 +100,7 @@ test("money can't be logged for a player whose link isn't confirmed", async ({ p
 
 test("only ops edits a verified entry, and the change is kept in history", async ({ page }) => {
   await login(page, "a1@opengrowth.local");
+  await page.goto("/desk/queue");
   await page.locator("#queue").getByRole("row", { name: /player21.*\$150\.00/ }).getByRole("link", { name: "View" }).click();
   await page.waitForURL(/\/desk\/entries\//);
   await expect(page.getByRole("heading", { name: "Edit verified entry" })).toHaveCount(0);
@@ -112,6 +119,7 @@ test("only ops edits a verified entry, and the change is kept in history", async
 
 test("screenshots are private", async ({ page, request }) => {
   await login(page, "a1@opengrowth.local");
+  await page.goto("/desk/queue");
   await page.locator("#queue").getByRole("row", { name: /player21/ }).getByRole("link", { name: "View" }).click();
   const src = await page.getByRole("img", { name: /Payment screenshot/ }).getAttribute("src");
   expect((await page.request.get(src!)).status()).toBe(200);

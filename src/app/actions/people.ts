@@ -150,7 +150,7 @@ async function addPlayer(form: FormData, source: LinkSource, actorId: string | n
       parsed.data.referralCode,
       { source, actorId },
     );
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
     revalidatePath("/ops/verification");
     if (source === "link") return { message: "You're in. Give your handle to the team when you make your first deposit." };
     if (reasons.length) return { message: `${player.handle} matches ${affiliate.legalName}'s own details. Sent to ops for review.` };
@@ -178,7 +178,7 @@ export async function confirmLinkAction(_prev: ActionState, form: FormData): Pro
   const user = await requireRole(AREA_ROLES.desk);
   return attempt(async () => {
     await confirmPlayerLink(str(form, "playerId"), user.id);
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
   });
 }
 
@@ -188,7 +188,7 @@ export async function rejectLinkAction(_prev: ActionState, form: FormData): Prom
   if (!reason) return { error: "Pick a reason" };
   return attempt(async () => {
     await rejectPlayerLink(str(form, "playerId"), user.id, reason);
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
   });
 }
 
@@ -196,7 +196,7 @@ export async function sendToOpsAction(_prev: ActionState, form: FormData): Promi
   const user = await requireRole(AREA_ROLES.desk);
   return attempt(async () => {
     await sendPlayerToOps(str(form, "playerId"), user.id);
-    revalidatePath("/desk");
+    revalidatePath("/desk", "layout");
     revalidatePath("/ops/verification");
   });
 }

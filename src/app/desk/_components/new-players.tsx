@@ -29,13 +29,7 @@ export async function NewPlayers() {
   });
 
   return (
-    <Card id="new" className="flex flex-col gap-5 !px-0">
-      <div className="px-6">
-        <h2 className="m-0 text-xl font-extrabold">New players from affiliate links</h2>
-        <p className="m-0 mt-1 text-sm text-muted">
-          Players who signed up through a link are tagged automatically. Confirm the link before their first deposit is logged.
-        </p>
-      </div>
+    <Card id="new" className="flex flex-col gap-5 !px-0 !pt-2">
       <Table>
         <thead>
           <tr>

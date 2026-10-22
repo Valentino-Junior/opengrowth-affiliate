@@ -12,7 +12,7 @@ import { Field } from "@/components/field";
 import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle } from "@/components/ui";
-import { StatusPill } from "../../verify-queue";
+import { StatusPill } from "../../_components/verify-queue";
 
 const REJECT_REASONS = ["Ref not found in the app", "Wrong amount", "Wrong payment method", "Wrong player", "Duplicate entry", "Screenshot doesn't match", "Other"];
 
@@ -60,7 +60,7 @@ export default async function EntryPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <div className="flex flex-col gap-3">
-        <Link href="/desk#queue" className="text-sm text-muted">
+        <Link href="/desk/queue" className="text-sm text-muted">
           ← Back to the verify queue
         </Link>
         <PageTitle eyebrow="TRANSACTION DESK" title={`${entry.type === "deposit" ? "Deposit" : "Cashout"} · ${entry.player.handle}`} />
