@@ -38,7 +38,7 @@ export default async function OpsOverviewPage() {
         />
         <Stat label="IDs to review" value={String(ids)} note="Open verification" accent={ids ? "gold" : undefined} href="/ops/verification" />
         <Stat label="Flags to review" value={String(flagReviews)} note="Possible self-referrals" accent={flagReviews ? "gold" : undefined} href="/ops/verification/flags" />
-        <Stat label="Affiliates waiting for approval" value={String(approvals)} note="Open affiliates" accent={approvals ? "gold" : undefined} href="/ops/affiliates" />
+        <Stat label="Affiliates waiting for approval" value={String(approvals)} note="Open approvals" accent={approvals ? "gold" : undefined} href="/ops/affiliates/approvals" />
         <Stat label="Prizes ready to release" value={String(prizes)} note="ID verified, not flagged" accent={prizes ? "gold" : undefined} href="/ops/verification/prizes" />
       </section>
     </>

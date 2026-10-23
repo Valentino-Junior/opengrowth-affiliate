@@ -121,8 +121,10 @@ test("self-serve signup waits for approval, then gets a code", async ({ page }) 
   await logout(page);
 
   await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/affiliates");
+  await page.goto("/ops/affiliates/approvals");
   await page.getByRole("row", { name: /Casey Signup/ }).getByRole("button", { name: "Approve" }).click();
+  await expect(page.getByText(/Approved Casey Signup: OG-A\d+\./)).toBeVisible();
+  await page.getByRole("link", { name: "All affiliates" }).click();
   await expect(page.getByRole("row", { name: /Casey Signup/ }).getByText(/OG-A\d+/)).toBeVisible();
 });
 

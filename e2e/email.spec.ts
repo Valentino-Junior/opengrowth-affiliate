@@ -48,7 +48,7 @@ test("signing up asks for the emailed 6-digit code", async ({ page }) => {
 
 test("ops sees the confirmed email and approving sends the code by email", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/affiliates");
+  await page.goto("/ops/affiliates/approvals");
   const row = page.getByRole("row", { name: /Casey Confirm/ });
   await expect(row.getByText("Email confirmed")).toBeVisible();
   await row.getByRole("button", { name: "Approve" }).click();
