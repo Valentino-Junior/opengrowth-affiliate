@@ -49,6 +49,23 @@ test("an employee cannot open the payout run", async ({ page }) => {
   await expect(page).toHaveURL("/desk");
 });
 
+test("desk and ops are separate: neither can open the other's area", async ({ page }) => {
+  await login(page, "ops@opengrowth.local");
+  for (const path of ["/desk", "/desk/log", "/desk/queue", "/desk/new-players"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL("/ops");
+  }
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: /desk/i })).toHaveCount(0);
+  await page.getByRole("button", { name: "Log out" }).click();
+  await page.waitForURL("**/login");
+
+  await login(page, "a1@opengrowth.local");
+  for (const path of ["/ops", "/ops/verification", "/ops/transactions", "/admin/settings"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL("/desk");
+  }
+});
+
 test("an affiliate sees their referral code on their profile, not the dashboard", async ({ page }) => {
   await login(page, "affiliate02@opengrowth.local");
   await expect(page.getByRole("region", { name: "Referral code" })).toHaveCount(0);

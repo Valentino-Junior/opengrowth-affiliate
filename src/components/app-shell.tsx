@@ -14,7 +14,7 @@ const ops: NavItem[] = [
   { href: "/ops/payouts", label: "Payout run" },
   { href: "/ops/verification", label: "Verification" },
   { href: "/ops/affiliates", label: "Affiliates" },
-  { href: "/desk", label: "Transaction desk" },
+  { href: "/ops/transactions", label: "Transactions", match: ["/ops/entries"] },
 ];
 
 function navFor(area: Area, role: Role): NavItem[] {
@@ -32,7 +32,6 @@ function navFor(area: Area, role: Role): NavItem[] {
         { href: "/desk/new-players", label: "New players" },
         { href: "/desk/log", label: "Log transaction" },
         { href: "/desk/queue", label: "Verify queue", match: ["/desk/entries"] },
-        ...(role === "employee" ? [] : [{ href: "/ops", label: "Back to ops" }]),
       ];
     case "ops":
       return role === "admin" ? [...ops, { href: "/admin/settings", label: "Settings" }] : ops;

@@ -146,8 +146,13 @@ test("only ops edits a verified entry, and the change is kept in history", async
   const url = page.url();
   await logout(page);
 
+  // Ops can't open the desk; they find the entry under Ops → Transactions.
   await login(page, "ops@opengrowth.local");
   await page.goto(url);
+  await expect(page).toHaveURL("/ops");
+  await page.goto("/ops/transactions?status=verified");
+  await page.getByRole("link", { name: "Open player21 deposit $150.00" }).click();
+  await page.waitForURL(/\/ops\/entries\//);
   await page.getByLabel("Amount (USD)").fill("175");
   await page.getByLabel("Why is it changing?").fill("Screenshot shows $175");
   await page.getByRole("button", { name: "Save change" }).click();

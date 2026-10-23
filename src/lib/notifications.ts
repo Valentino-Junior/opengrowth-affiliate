@@ -30,7 +30,7 @@ export async function notifyRoles(roles: Role[], n: NotificationInput, except?: 
   }
 }
 
-export const STAFF_DESK: Role[] = ["employee", "ops"];
+export const STAFF_DESK: Role[] = ["employee"];
 export const MANAGEMENT: Role[] = ["ops", "admin"];
 
 export async function listNotifications(userId: string, take = 20) {

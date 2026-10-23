@@ -117,6 +117,7 @@ export async function editTransactionAction(_prev: ActionState, form: FormData):
       str(form, "reason"),
     );
     revalidatePath(`/desk/entries/${id}`);
+    revalidatePath("/ops", "layout");
     revalidatePath("/desk", "layout");
     return { message: "Entry updated. The change is in the history below." };
   });
