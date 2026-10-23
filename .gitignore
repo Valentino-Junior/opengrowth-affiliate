@@ -48,3 +48,4 @@ next-env.d.ts
 # uploaded files (local storage until S3)
 /storage/
 !.env.production.example
+/.next-test/

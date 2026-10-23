@@ -3,13 +3,13 @@ import { db } from "@/lib/db";
 import { formatCents } from "@/lib/money";
 import { DUPLICATE_REASON } from "@/lib/transactions";
 import { dateToZonedLocal } from "@/lib/weeks";
-import { PageTitle } from "@/components/ui";
+import { Card, PageTitle } from "@/components/ui";
 import { LogTransaction, type FixPrefill } from "../_components/log-transaction";
 import { MyRejected } from "../_components/verify-queue";
 
-export default async function DeskLogPage({ searchParams }: { searchParams: Promise<{ fix?: string }> }) {
+export default async function DeskLogPage({ searchParams }: { searchParams: Promise<{ fix?: string; corrected?: string }> }) {
   const user = await requireRole(AREA_ROLES.desk);
-  const { fix: fixId } = await searchParams;
+  const { fix: fixId, corrected } = await searchParams;
 
   let fix: FixPrefill | null = null;
   if (fixId && /^[0-9a-f-]{36}$/.test(fixId)) {
@@ -36,6 +36,13 @@ export default async function DeskLogPage({ searchParams }: { searchParams: Prom
         title="Log a transaction"
         lead="Enter it exactly as it shows in the payment app. It goes to the verify queue, not straight to the books."
       />
+      {corrected ? (
+        <Card tone="green">
+          <p className="m-0 text-sm">
+            Correction logged: <strong>{corrected}</strong>. It&apos;s in the verify queue for a teammate to check.
+          </p>
+        </Card>
+      ) : null}
       <MyRejected userId={user.id} fixingId={fix?.id} />
       {/* A new key per entry being fixed, so the form starts from that entry's details. */}
       <LogTransaction key={fix?.id ?? "new"} fix={fix} />

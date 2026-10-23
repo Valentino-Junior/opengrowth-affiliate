@@ -44,7 +44,7 @@ function parseAmount(v: string): bigint {
 
 export async function logTransactionAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireRole(AREA_ROLES.desk);
-  return attempt(async () => {
+  const result = await attempt(async () => {
     const type = parseType(str(form, "type"));
     const method = parseMethod(str(form, "method"));
     const amountCents = parseAmount(str(form, "amount"));
@@ -60,11 +60,13 @@ export async function logTransactionAction(_prev: ActionState, form: FormData): 
     );
     revalidatePath("/desk", "layout");
     return {
-      message: entry.replacesId
-        ? `Logged the corrected ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.`
-        : `Logged ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.`,
+      message: `Logged ${formatCents(entry.amountCents)} ${type} for ${player.handle}. It's in the verify queue.`,
+      ...(entry.replacesId ? { detail: { corrected: `${formatCents(entry.amountCents)} ${type} for ${player.handle}` } } : {}),
     };
   });
+  // A correction leaves fix mode, which resets the form; say so on the page instead of inside the form.
+  if (result.detail?.corrected) redirect(`/desk/log?corrected=${encodeURIComponent(result.detail.corrected)}`);
+  return result;
 }
 
 export async function verifyTransactionAction(_prev: ActionState, form: FormData): Promise<ActionState> {

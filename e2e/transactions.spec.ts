@@ -100,10 +100,12 @@ test("a duplicate rejection can only be dismissed, never logged twice", async ({
   await login(page, "a2@opengrowth.local");
   await page.goto("/desk/log");
   const back = page.getByRole("heading", { name: "Sent back to you" }).locator("..");
-  await expect(back.getByText("Duplicate entry")).toBeVisible();
-  await expect(back.getByRole("link", { name: "Fix and log again" })).toHaveCount(0);
-  await back.getByRole("button", { name: /^Dismiss player12/ }).click();
-  await expect(page.getByRole("heading", { name: "Sent back to you" })).toHaveCount(0);
+  // A2 may have other rejected entries too; look at the player12 one only.
+  const row = back.getByRole("listitem").filter({ hasText: "player12" });
+  await expect(row.getByText("Duplicate entry")).toBeVisible();
+  await expect(row.getByRole("link", { name: "Fix and log again" })).toHaveCount(0);
+  await row.getByRole("button", { name: /^Dismiss player12/ }).click();
+  await expect(back.getByRole("listitem").filter({ hasText: "player12" })).toHaveCount(0);
 });
 
 test("a payment reference can't be logged twice; a non-image is refused", async ({ page }) => {

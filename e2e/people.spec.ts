@@ -95,6 +95,7 @@ test("ops registers an affiliate, who can log in with the temporary password", a
   const code = await form.locator("dd").nth(0).innerText();
   const temp = await form.locator("dd").nth(2).innerText();
   expect(code).toBe("OG-A07");
+  await page.keyboard.press("Escape");
   await logout(page);
 
   await login(page, "riley@example.com", temp);
@@ -112,6 +113,9 @@ test("self-serve signup waits for approval, then gets a code", async ({ page }) 
   await page.getByLabel("Get paid by").selectOption("venmo");
   await page.getByLabel("Payout handle").fill("@casey");
   await page.getByRole("button", { name: "Create my account" }).click();
+  // Signup asks for the emailed code first; this test confirms later.
+  await expect(page).toHaveURL("/verify-email");
+  await page.getByRole("link", { name: "Do this later" }).click();
   await expect(page).toHaveURL("/dashboard");
   await expect(page.getByText("waiting for approval")).toBeVisible();
   await logout(page);
@@ -133,6 +137,7 @@ test("desk adds a walk-in whose payment handle is the affiliate's → straight t
   await form.getByLabel("Payment handle").fill("$affiliate02");
   await form.getByRole("button", { name: "Add player" }).click();
   await expect(page.getByText("walkin1 matches Affiliate 02's own details. Sent to ops for review.")).toBeVisible();
+  await page.keyboard.press("Escape");
 
   await logout(page);
   await login(page, "ops@opengrowth.local");

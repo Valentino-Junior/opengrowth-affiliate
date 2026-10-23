@@ -10,6 +10,8 @@ async function login(page: import("@playwright/test").Page, email: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
+  // Wait until the login has really finished before the test moves on.
+  await page.waitForURL((u) => !u.pathname.startsWith("/login"));
 }
 
 const roles = [

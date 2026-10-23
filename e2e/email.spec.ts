@@ -52,7 +52,7 @@ test("ops sees the confirmed email and approving sends the code by email", async
   const row = page.getByRole("row", { name: /Casey Confirm/ });
   await expect(row.getByText("Email confirmed")).toBeVisible();
   await row.getByRole("button", { name: "Approve" }).click();
-  await expect(page.getByText(/Approved: OG-A\d+\. We emailed them\./)).toBeVisible();
+  await expect(page.getByText(/Approved Casey Confirm: OG-A\d+\. We emailed them\./)).toBeVisible();
 
   const mail = await latestEmail(email);
   expect(mail?.kind).toBe("approved");

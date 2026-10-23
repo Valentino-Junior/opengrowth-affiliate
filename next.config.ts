@@ -29,6 +29,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // NEXT_DIST_DIR lets a test build live beside a running `npm run dev` without overwriting its .next folder.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   experimental: {
     // Payment screenshots and ID photos are uploaded through server actions (10 MB each + form fields).

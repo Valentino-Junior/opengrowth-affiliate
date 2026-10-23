@@ -116,13 +116,20 @@ npm start             # http://localhost:3000
 
 ```sh
 npm test                                   # 21 rule tests: commission, carry-forward, weeks, money
-npm run build && npm start                 # in one terminal, then in another:
-PW_CHANNEL=chrome npm run test:e2e         # 40 browser tests (uses your installed Google Chrome)
 ```
 
-The browser tests reload the sample data first, so anything you changed by hand is reset.
-To run one self-cleaning file against your dev server without resetting the data: `PW_NO_SEED=1 PW_CHANNEL=chrome npx playwright test e2e/account.spec.ts`.
-No Chrome? Run `npx playwright install chromium` once and drop `PW_CHANNEL=chrome`.
+The 60 browser tests run against a production build. Build it into its own folder and port, so a running
+`npm run dev` isn't disturbed:
+
+```sh
+NEXT_DIST_DIR=.next-test npm run build
+LOGIN_LIMIT_PER_IP=5000 NEXT_DIST_DIR=.next-test npx next start -p 3100     # leave running, then in another terminal:
+BASE_URL=http://localhost:3100 PW_CHANNEL=chrome npm run test:e2e
+```
+
+The browser tests **reset the database to the sample data** first. `LOGIN_LIMIT_PER_IP` lifts the
+100-logins-per-15-minutes limit for the test run only. No Chrome? Run `npx playwright install chromium` once
+and drop `PW_CHANNEL=chrome`.
 
 ### If something goes wrong
 

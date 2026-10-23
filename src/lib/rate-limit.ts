@@ -32,7 +32,8 @@ export async function clientIp(): Promise<string> {
 }
 
 export const LIMITS = {
-  loginPerIp: { limit: 100, window: 15 * 60 },
+  // LOGIN_LIMIT_PER_IP raises it for the automated tests, which log in well over 100 times in a run.
+  loginPerIp: { limit: Number(process.env.LOGIN_LIMIT_PER_IP) || 100, window: 15 * 60 },
   failedLoginsPerEmail: { limit: 10, window: 15 * 60 },
   affiliateSignupPerIp: { limit: 5, window: 60 * 60 },
   playerSignupPerIp: { limit: 10, window: 60 * 60 },

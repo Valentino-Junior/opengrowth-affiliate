@@ -54,8 +54,8 @@ test("a rejection rings the logger's bell; it opens the pre-filled fix; submitti
   await fix.getByLabel("Amount (USD)").fill("85");
   await fix.getByLabel("Payment screenshot").setInputFiles(receipt);
   await fix.getByRole("button", { name: "Submit the correction" }).click();
-  await expect(page.getByText("Logged the corrected $85.00 deposit for player02.")).toBeVisible();
-  await page.goto("/desk/log");
+  await expect(page).toHaveURL(/\/desk\/log\?corrected=/);
+  await expect(page.getByText("Correction logged: $85.00 deposit for player02.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sent back to you" })).toHaveCount(0);
   await page.goto("/desk/queue");
   await expect(page.locator("#queue").getByRole("row", { name: /player02.*\$85\.00/ }).getByText("Correction")).toBeVisible();

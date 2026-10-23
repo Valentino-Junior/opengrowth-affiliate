@@ -21,8 +21,9 @@ const statusTone = {
 
 const DECLINE_REASONS = ["Duplicate person", "Details don't check out", "Other"];
 
-export default async function AffiliatesPage() {
+export default async function AffiliatesPage({ searchParams }: { searchParams: Promise<{ done?: string }> }) {
   await requireRole(AREA_ROLES.ops);
+  const { done } = await searchParams;
   const [pending, affiliates] = await Promise.all([
     db.affiliate.findMany({ where: { status: "pending_approval" }, orderBy: { createdAt: "asc" }, include: { user: true } }),
     db.affiliate.findMany({
@@ -70,6 +71,12 @@ export default async function AffiliatesPage() {
           </ModalButton>
         </div>
       </div>
+
+      {done ? (
+        <Card tone="green">
+          <p className="m-0 text-sm">{done}</p>
+        </Card>
+      ) : null}
 
       <Card id="approvals" tone={pending.length ? "gold" : "default"} className="flex flex-col gap-4 !px-0">
         <div className="px-6">

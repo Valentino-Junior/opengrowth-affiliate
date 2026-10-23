@@ -102,26 +102,32 @@ export async function registerAffiliateAction(_prev: ActionState, form: FormData
 
 export async function approveAffiliateAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireRole(AREA_ROLES.ops);
-  return attempt(async () => {
+  const result = await attempt(async () => {
     const a = await approveAffiliate(str(form, "affiliateId"), user.id);
     revalidatePath("/ops/affiliates");
     const owner = await db.user.findUniqueOrThrow({ where: { id: a.userId } });
     const sent = await approvedMessage(owner.email, a.legalName, a.referralCode!);
     await notify([owner.id], { kind: "approved", title: `You're approved: your code is ${a.referralCode}`, body: "Share your code or link to start earning.", href: "/account" });
-    return { message: `Approved: ${a.referralCode}.${sent.ok ? " We emailed them." : " The email couldn't be sent; tell them yourself."}` };
+    return { message: `Approved ${a.legalName}: ${a.referralCode}.${sent.ok ? " We emailed them." : " The email couldn't be sent; tell them yourself."}` };
   });
+  // The approved row leaves the waiting list (and its message with it), so report it at the top of the page.
+  if (result.message) redirect(`/ops/affiliates?done=${encodeURIComponent(result.message)}`);
+  return result;
 }
 
 export async function declineAffiliateAction(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireRole(AREA_ROLES.ops);
   const reason = str(form, "reason");
   if (!reason) return { error: "Pick a reason" };
-  return attempt(async () => {
+  const result = await attempt(async () => {
     const affiliate = await db.affiliate.findUniqueOrThrow({ where: { id: str(form, "affiliateId") }, include: { user: true } });
     await declineAffiliate(affiliate.id, user.id, reason);
     revalidatePath("/ops/affiliates");
     await declinedMessage(affiliate.user.email, affiliate.legalName);
+    return { message: `Declined ${affiliate.legalName}. We emailed them.` };
   });
+  if (result.message) redirect(`/ops/affiliates?done=${encodeURIComponent(result.message)}`);
+  return result;
 }
 
 // ---------- Players ----------
