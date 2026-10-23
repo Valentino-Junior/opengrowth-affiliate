@@ -84,7 +84,13 @@ test("ops overview: each card opens the tab where it's handled", async ({ page }
   const nav = page.getByRole("navigation", { name: "Main" });
   for (const tab of ["Overview", "Payout run", "Verification", "Affiliates", "Transaction desk"]) await expect(nav.getByRole("link", { name: tab })).toBeVisible();
   await page.getByRole("link", { name: /IDs to review/ }).click();
-  await expect(page).toHaveURL("/ops/verification#ids");
+  await expect(page).toHaveURL("/ops/verification");
+  // Verification has a tab per kind of check.
+  const tabs = page.getByRole("navigation", { name: "Verification" });
+  for (const t of ["IDs to review", "Who needs an ID", "Flags", "Prizes"]) await expect(tabs.getByRole("link", { name: new RegExp(`^${t}`) })).toBeVisible();
+  await tabs.getByRole("link", { name: /^Flags/ }).click();
+  await expect(page).toHaveURL("/ops/verification/flags");
+  await expect(page.getByRole("heading", { name: "Open flags" })).toBeVisible();
   // The payout run is only about payouts now.
   await page.goto("/ops/payouts");
   await expect(page.getByRole("region", { name: "Who still needs an ID" })).toHaveCount(0);

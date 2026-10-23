@@ -21,9 +21,9 @@ export async function submitIdAction(_prev: ActionState, form: FormData): Promis
     const frontKey = await putImage("ids", form.get("front") as File | null, "Photo of the ID");
     const selfieKey = await putImage("ids", form.get("selfie") as File | null, "Selfie holding the ID");
     await submitId(user.affiliate.id, { frontKey, selfieKey, nameOnId: str(form, "nameOnId") });
-    await notifyRoles(MANAGEMENT, { kind: "id_submitted", title: `${user.affiliate.legalName} sent an ID to check`, href: "/ops/verification#ids" });
+    await notifyRoles(MANAGEMENT, { kind: "id_submitted", title: `${user.affiliate.legalName} sent an ID to check`, href: "/ops/verification" });
     revalidatePath("/dashboard");
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
   });
   if (result.error) return result;
   redirect("/dashboard?id=submitted");
@@ -36,7 +36,7 @@ export async function approveIdAction(_prev: ActionState, form: FormData): Promi
     const doc = await db.idDocument.findUniqueOrThrow({ where: { id: str(form, "docId") }, include: { affiliate: true } });
     await approveId(doc.id, user.id);
     await notify([doc.affiliate.userId], { kind: "id_verified", title: "Your ID is verified", body: "Large payouts and Top 3 prizes are unlocked.", href: "/account" });
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
     revalidatePath("/ops/payouts");
   });
 }
@@ -47,7 +47,7 @@ export async function rejectIdAction(_prev: ActionState, form: FormData): Promis
     const doc = await db.idDocument.findUniqueOrThrow({ where: { id: str(form, "docId") }, include: { affiliate: true } });
     await rejectId(doc.id, user.id, str(form, "reason"));
     await notify([doc.affiliate.userId], { kind: "id_rejected", title: "Your ID was rejected", body: `Reason: ${str(form, "reason")}. Please upload it again.`, href: "/account" });
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
   });
 }
 
@@ -55,7 +55,7 @@ export async function releasePrizeAction(_prev: ActionState, form: FormData): Pr
   const user = await requireRole(AREA_ROLES.ops);
   return attempt(async () => {
     await releasePrize(str(form, "resultId"), user.id);
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
     return { message: "Prize released." };
   });
 }

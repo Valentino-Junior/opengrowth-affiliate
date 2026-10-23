@@ -32,7 +32,6 @@ export async function IdChecks() {
   return (
     <Card id="needs-id" aria-label="Who still needs an ID" className="flex flex-col gap-3 !px-0">
       <div className="px-6">
-        <h2 className="m-0 text-xl font-extrabold">Who still needs an ID</h2>
         <p className="m-0 mt-1 text-sm text-muted">
           Required for any payout over {formatCents(thresholdCents, { whole: true })} and every Top 3 prize. Name on ID must match the account. A flagged affiliate can&apos;t receive a prize until the flag is cleared; if
           they&apos;re disqualified, the next affiliate in line moves up.
@@ -73,7 +72,7 @@ export async function IdChecks() {
                 </Td>
                 <Td>
                   {a.idStatus === "submitted" ? (
-                    <Link href="/ops/verification#ids" className="rounded-full bg-gold px-4 py-1.5 text-sm font-bold text-bg no-underline">
+                    <Link href="/ops/verification" className="rounded-full bg-gold px-4 py-1.5 text-sm font-bold text-bg no-underline">
                       Verify ID
                     </Link>
                   ) : null}

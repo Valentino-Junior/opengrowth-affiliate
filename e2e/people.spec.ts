@@ -26,7 +26,7 @@ test("self-referral: desk sends Player 23 to ops, ops clears it", async ({ page 
   await page.goto("/ops/affiliates");
   await expect(page.getByRole("row", { name: /Affiliate 06/ }).getByText("flagged")).toBeVisible();
 
-  await page.goto("/ops/verification");
+  await page.goto("/ops/verification/flags");
   const flag = page.getByRole("row", { name: /player23/ });
   await expect(flag.getByText("Phone matches the affiliate")).toBeVisible();
   await flag.getByRole("button", { name: "Clear" }).click();
@@ -136,7 +136,7 @@ test("desk adds a walk-in whose payment handle is the affiliate's → straight t
 
   await logout(page);
   await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/verification");
+  await page.goto("/ops/verification/flags");
   const flag = page.getByRole("row", { name: /walkin1/ });
   await flag.getByRole("button", { name: "Disqualify" }).click();
   await expect(page.getByRole("row", { name: /walkin1/ }).getByText("Disqualified")).toBeVisible();

@@ -207,11 +207,11 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
                       name={r.affiliate.legalName}
                     />
                   ) : r.status === "flagged" ? (
-                    <Link href="/ops/verification" className="rounded-full border border-red/50 px-4 py-1.5 text-sm font-bold text-red no-underline">
+                    <Link href="/ops/verification/flags" className="rounded-full border border-red/50 px-4 py-1.5 text-sm font-bold text-red no-underline">
                       Review
                     </Link>
                   ) : r.status === "needs_id" ? (
-                    <Link href="/ops/verification#ids" className="rounded-full border border-orange/50 px-4 py-1.5 text-sm font-bold text-orange no-underline">
+                    <Link href="/ops/verification" className="rounded-full border border-orange/50 px-4 py-1.5 text-sm font-bold text-orange no-underline">
                       Verify ID
                     </Link>
                   ) : r.status === "paid" ? (

@@ -28,10 +28,7 @@ export async function IdReview() {
   const docs = await db.idDocument.findMany({ where: { status: "submitted" }, orderBy: { createdAt: "asc" }, include: { affiliate: true } });
   return (
     <Card id="ids" tone={docs.length ? "gold" : "default"} className="flex flex-col gap-4">
-      <div>
-        <h2 className="m-0 text-xl font-extrabold">ID review</h2>
-        <p className="m-0 mt-1 text-sm text-muted">The name on the ID must match the account. Approving unlocks large payouts and prizes.</p>
-      </div>
+      <p className="m-0 text-sm text-muted">The name on the ID must match the account. Approving unlocks large payouts and prizes.</p>
       {docs.length === 0 ? <p className="m-0 text-sm text-muted">No IDs waiting.</p> : null}
       {docs.map((d) => {
         const match = sameName(d.nameOnId, d.affiliate.legalName);

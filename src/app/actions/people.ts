@@ -154,7 +154,7 @@ async function addPlayer(form: FormData, source: LinkSource, actorId: string | n
       { source, actorId },
     );
     revalidatePath("/desk", "layout");
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
     if (source === "link")
       await notifyRoles(STAFF_DESK, {
         kind: "player_signup",
@@ -167,7 +167,7 @@ async function addPlayer(form: FormData, source: LinkSource, actorId: string | n
         kind: "flag",
         title: `Possible self-referral: ${player.handle}`,
         body: `Details match ${affiliate.legalName}'s own. Review the flag.`,
-        href: "/ops/verification",
+        href: "/ops/verification/flags",
       });
     if (source === "link") return { message: "You're in. Give your handle to the team when you make your first deposit." };
     if (reasons.length) return { message: `${player.handle} matches ${affiliate.legalName}'s own details. Sent to ops for review.` };
@@ -219,10 +219,10 @@ export async function sendToOpsAction(_prev: ActionState, form: FormData): Promi
       kind: "flag",
       title: `Possible self-referral: ${sent?.handle ?? "a player"}`,
       body: sent?.affiliate ? `The desk sent it to you. Details match ${sent.affiliate.legalName}'s own.` : "The desk sent it to you.",
-      href: "/ops/verification",
+      href: "/ops/verification/flags",
     });
     revalidatePath("/desk", "layout");
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
   });
 }
 
@@ -237,7 +237,7 @@ export async function resolveFlagAction(_prev: ActionState, form: FormData): Pro
     // Payout rows held for this flag can now become ready (or drop the disqualified player's money).
     await refreshAllHeldRows();
     revalidatePath("/ops/payouts");
-    revalidatePath("/ops/verification");
+    revalidatePath("/ops/verification", "layout");
     revalidatePath("/ops/affiliates");
   });
 }

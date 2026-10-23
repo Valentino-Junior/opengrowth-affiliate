@@ -98,7 +98,7 @@ test("ops rejects an ID with a reason; the affiliate sees it and can upload agai
 
 test("September prizes: release only to a verified, unflagged winner", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/verification");
+  await page.goto("/ops/verification/prizes");
   const prizes = page.locator("#prizes");
   await expect(prizes.getByRole("heading")).toHaveText("Top 3 prizes · September 2026");
   await expect(prizes.getByRole("row", { name: /Affiliate 06/ }).getByText("Waiting for ID")).toBeVisible();
@@ -111,7 +111,7 @@ test("September prizes: release only to a verified, unflagged winner", async ({ 
 
 test("Verification lists who still needs an ID: this month's top 3", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/verification");
+  await page.goto("/ops/verification/needs-id");
   const checks = page.getByRole("region", { name: "Who still needs an ID" });
   await expect(checks.getByRole("row", { name: /Affiliate 06/ }).getByText("October 1st place: car")).toBeVisible();
   await expect(checks.getByRole("row", { name: /Affiliate 05/ }).getByText("On hold: flagged")).toBeVisible();
