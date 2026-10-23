@@ -24,10 +24,8 @@ test("close last week → the run matches the ops mockup", async ({ page }) => {
   await expectRow("Affiliate 02", ["$79.00"], "Ready");
   await expectRow("Affiliate 05", ["$110.00"], "Flagged");
   await expectRow("Affiliate 06", ["$148.00"], "Ready");
-  // Nobody is paid from a carried or under-minimum row, so those sit in a closed list below the table.
-  await page.getByText("Nothing to pay this week: 2 affiliates").click();
-  await expect(page.getByText("−$410 net loss carries into next week")).toBeVisible();
-  await expect(page.getByText("$8.00 is under the minimum and rolls into the next payout")).toBeVisible();
+  // Carried and under-minimum rows pay nothing, so they're only in the export.
+  await expect(page.getByRole("row", { name: /Affiliate 0[34]/ })).toHaveCount(0);
   await expect(page.getByText("open flag to review")).toBeVisible();
   await expect(page.getByRole("button", { name: "Close week now" })).toHaveCount(0);
 });

@@ -64,9 +64,8 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
     db.flag.count({ where: { status: "open" } }),
   ]);
 
-  // Rows with something to pay (or something stopping it) come first; carried and under-minimum rows pay nothing this week.
+  // Carried and under-minimum rows pay nothing this week, so they only appear in the export.
   const toPay = rows.filter((r) => r.status !== "carried" && r.status !== "under_minimum");
-  const nothingDue = rows.filter((r) => r.status === "carried" || r.status === "under_minimum");
   const sum = (f: (r: (typeof rows)[number]) => bigint) => rows.reduce((t, r) => t + f(r), 0n);
   const readyCents = sum((r) => (r.status === "ready" ? r.payableCents : 0n));
   const paidCents = sum((r) => (r.status === "paid" ? r.payableCents : 0n));
@@ -190,25 +189,6 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
         </Table>
       </Card>
 
-      {nothingDue.length ? (
-        <details className="rounded-card border border-line bg-surface px-6 py-4">
-          <summary className="cursor-pointer text-sm font-semibold text-muted">
-            Nothing to pay this week: {nothingDue.length} {nothingDue.length === 1 ? "affiliate" : "affiliates"}
-          </summary>
-          <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0 text-sm">
-            {nothingDue.map((r) => (
-              <li key={r.id} className="flex flex-wrap justify-between gap-2">
-                <span className="font-semibold">{r.affiliate.legalName}</span>
-                <span className="text-muted">
-                  {r.status === "carried"
-                    ? `${formatCents(r.netCents, { whole: true })} net loss carries into next week`
-                    : `${formatCents(r.commissionCents)} is under the minimum and rolls into the next payout`}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
     </>
   );
 }
