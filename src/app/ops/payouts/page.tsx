@@ -60,7 +60,7 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
   const bounds = { startsOn: ymd(week.startsOn), endsOn: ymd(week.endsOn) };
   const [rows, pendingPlayers, pendingEntries, openFlags] = await Promise.all([
     db.affiliateWeek.findMany({ where: { weekId: week.id }, include: { affiliate: true }, orderBy: { affiliate: { referralCode: "asc" } } }),
-    db.player.count({ where: { linkStatus: { in: ["pending", "sent_to_ops"] } } }),
+    db.player.count({ where: { linkStatus: "pending" } }), // sent_to_ops players are counted under open flags
     db.transaction.count({ where: { status: "pending", occurredAt: { lt: new Date(week.endsOn.getTime() + 2 * 864e5) } } }),
     db.flag.count({ where: { status: "open" } }),
   ]);
@@ -78,7 +78,11 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
 
   // Only what's still in the way. Each line disappears once it's done.
   const blockers = [
-    pendingPlayers ? { text: `${pendingPlayers} new ${pendingPlayers === 1 ? "player is" : "players are"} still waiting at the desk.` } : null,
+    pendingPlayers
+      ? {
+          text: `${pendingPlayers} new ${pendingPlayers === 1 ? "player hasn't" : "players haven't"} been confirmed by the desk yet. Their play won't count toward their affiliate's commission until then.`,
+        }
+      : null,
     pendingEntries ? { text: `${pendingEntries} ${pendingEntries === 1 ? "entry is" : "entries are"} still waiting in the desk's verify queue.` } : null,
     openFlags ? { text: `${openFlags} open ${openFlags === 1 ? "flag" : "flags"} to review.`, href: "/ops/verification/flags", link: "Review flags" } : null,
   ].filter((b) => b !== null);
