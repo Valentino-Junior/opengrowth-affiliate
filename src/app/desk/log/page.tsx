@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { formatCents } from "@/lib/money";
 import { DUPLICATE_REASON } from "@/lib/transactions";
 import { dateToZonedLocal } from "@/lib/weeks";
-import { Card, PageTitle } from "@/components/ui";
+import { PageTitle } from "@/components/ui";
+import { Notice } from "@/components/notice";
 import { LogTransaction, type FixPrefill } from "../_components/log-transaction";
 import { MyRejected } from "../_components/verify-queue";
 
@@ -37,11 +38,11 @@ export default async function DeskLogPage({ searchParams }: { searchParams: Prom
         lead="Enter it exactly as it shows in the payment app. It goes to the verify queue, not straight to the books."
       />
       {corrected ? (
-        <Card tone="green">
+        <Notice param="corrected">
           <p className="m-0 text-sm">
             Correction logged: <strong>{corrected}</strong>. It&apos;s in the verify queue for a teammate to check.
           </p>
-        </Card>
+        </Notice>
       ) : null}
       <MyRejected userId={user.id} fixingId={fix?.id} />
       {/* A new key per entry being fixed, so the form starts from that entry's details. */}

@@ -5,6 +5,7 @@ import { formatDateTime, methodLabel } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, Pill } from "@/components/ui";
+import { Notice } from "@/components/notice";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
 
 const DECLINE_REASONS = ["Duplicate person", "Details don't check out", "Other"];
@@ -18,9 +19,9 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       {done ? (
-        <Card tone="green">
+        <Notice param="done">
           <p className="m-0 text-sm">{done}</p>
-        </Card>
+        </Notice>
       ) : null}
 
       <Card className="flex flex-col gap-4 !px-0">
