@@ -90,7 +90,7 @@ test("ops overview: each card opens the tab where it's handled", async ({ page }
   for (const t of ["IDs to review", "Who needs an ID", "Flags", "Prizes"]) await expect(tabs.getByRole("link", { name: new RegExp(`^${t}`) })).toBeVisible();
   await tabs.getByRole("link", { name: /^Flags/ }).click();
   await expect(page).toHaveURL("/ops/verification/flags");
-  await expect(page.getByRole("heading", { name: "Open flags" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Flags" }).getByRole("link", { name: /^Open/ })).toHaveAttribute("aria-current", "page");
   // The payout run is only about payouts now.
   await page.goto("/ops/payouts");
   await expect(page.getByRole("region", { name: "Who still needs an ID" })).toHaveCount(0);

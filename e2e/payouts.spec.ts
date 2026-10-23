@@ -59,7 +59,7 @@ test("clearing the flag releases Affiliate 05's $110", async ({ page }) => {
   await page.goto("/ops/payouts");
   await page.getByRole("row", { name: /Affiliate 05/ }).getByRole("link", { name: "Review" }).click();
   await page.getByRole("row", { name: /player24/ }).getByRole("button", { name: "Clear" }).click();
-  await expect(page.getByRole("row", { name: /player24/ }).getByText("Cleared")).toBeVisible();
+  await expect(page.getByRole("row", { name: /player24/ })).toHaveCount(0);
   await page.goto("/ops/payouts");
   await expect(page.getByRole("row", { name: /Affiliate 05/ }).getByText("Ready", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Run summary" }).getByText("$337.00")).toBeVisible(); // 79 + 110 + 148
