@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { attempt, type ActionState } from "@/lib/errors";
 import { formatCents } from "@/lib/money";
-import { closeDueWeeks, markPaid, setChecklistItem } from "@/lib/payouts";
+import { closeDueWeeks, markPaid } from "@/lib/payouts";
 import { db } from "@/lib/db";
 import { notify } from "@/lib/notifications";
 import { formatWeekRange } from "@/lib/weeks";
@@ -35,13 +35,5 @@ export async function markPaidAction(_prev: ActionState, form: FormData): Promis
         href: "/dashboard/payouts",
       });
     return { message: `Paid ${formatCents(BigInt(str(form, "amountCents") || "0"))}.` };
-  });
-}
-
-export async function checklistAction(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const user = await requireRole(AREA_ROLES.ops);
-  return attempt(async () => {
-    await setChecklistItem(str(form, "weekId"), "payouts_sent", form.get("done") === "true", user.id);
-    revalidatePath("/ops/payouts");
   });
 }

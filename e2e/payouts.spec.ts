@@ -13,7 +13,6 @@ test("close last week → the run matches the ops mockup", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Week of/);
 
   const summary = page.getByRole("region", { name: "Run summary" });
-  await expect(summary.getByText("$9,750")).toBeVisible();
   await expect(summary.getByText("$377.00")).toBeVisible();
 
   const expectRow = async (name: string, cells: string[], status: string) => {
@@ -21,13 +20,15 @@ test("close last week → the run matches the ops mockup", async ({ page }) => {
     for (const c of cells) await expect(row.getByText(c, { exact: true }).first()).toBeVisible();
     await expect(row.getByText(status, { exact: true })).toBeVisible();
   };
-  await expectRow("Affiliate 01", ["$3,000", "$150.00"], "Ready");
-  await expectRow("Affiliate 02", ["$1,840", "−$260", "$1,580", "$79.00"], "Ready");
-  await expectRow("Affiliate 03", ["−$410", "$0.00"], "Carried");
-  await expectRow("Affiliate 04", ["$160", "$8.00"], "Under minimum");
-  await expectRow("Affiliate 05", ["$2,200", "$110.00"], "Flagged");
-  await expectRow("Affiliate 06", ["$2,960", "$148.00"], "Ready");
-  await expect(page.getByText("Affiliate 05 is on hold: payment handle matches the affiliate (player player24). Review the flag before paying.")).toBeVisible();
+  await expectRow("Affiliate 01", ["$150.00"], "Ready");
+  await expectRow("Affiliate 02", ["$79.00"], "Ready");
+  await expectRow("Affiliate 05", ["$110.00"], "Flagged");
+  await expectRow("Affiliate 06", ["$148.00"], "Ready");
+  // Nobody is paid from a carried or under-minimum row, so those sit in a closed list below the table.
+  await page.getByText("Nothing to pay this week: 2 affiliates").click();
+  await expect(page.getByText("−$410 net loss carries into next week")).toBeVisible();
+  await expect(page.getByText("$8.00 is under the minimum and rolls into the next payout")).toBeVisible();
+  await expect(page.getByText("open flag to review")).toBeVisible();
   await expect(page.getByRole("button", { name: "Close week now" })).toHaveCount(0);
 });
 
@@ -42,7 +43,7 @@ test("mark paid asks to confirm, then the row is paid", async ({ page }) => {
   await expect(row.getByText("Paid", { exact: true })).toBeVisible();
   await expect(row.getByText(/CA-TEST-1/)).toBeVisible();
   await expect(page.getByRole("region", { name: "Run summary" }).getByText("$227.00")).toBeVisible();
-  await expect(page.getByText("$150.00 already paid")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Run summary" }).getByText("$150.00")).toBeVisible();
 });
 
 test("export payout list as CSV", async ({ page }) => {
@@ -64,17 +65,6 @@ test("clearing the flag releases Affiliate 05's $110", async ({ page }) => {
   await page.goto("/ops/payouts");
   await expect(page.getByRole("row", { name: /Affiliate 05/ }).getByText("Ready", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Run summary" }).getByText("$337.00")).toBeVisible(); // 79 + 110 + 148
-});
-
-test("the manual checklist item ticks and unticks", async ({ page }) => {
-  await login(page, "ops@opengrowth.local");
-  await page.goto("/ops/payouts");
-  const item = page.getByRole("listitem").filter({ hasText: "Payouts sent by each affiliate's method" });
-  await expect(item.getByText("(not done)")).toBeAttached();
-  await item.getByRole("button", { name: "Tick" }).click();
-  await expect(item.getByText("(done)")).toBeAttached();
-  await item.getByRole("button", { name: "Undo" }).click();
-  await expect(item.getByText("(not done)")).toBeAttached();
 });
 
 test("employees can't open the run or the export", async ({ page }) => {

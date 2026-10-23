@@ -213,15 +213,6 @@ export async function markPaid(rowId: string, actorId: string, paymentRef: strin
   });
 }
 
-export const MANUAL_CHECKS = ["payouts_sent"] as const;
-
-export async function setChecklistItem(weekId: string, item: (typeof MANUAL_CHECKS)[number], done: boolean, actorId: string) {
-  const week = await db.week.findUniqueOrThrow({ where: { id: weekId } });
-  const checklist = { ...(week.checklist as Record<string, boolean>), [item]: done };
-  await db.week.update({ where: { id: weekId }, data: { checklist } });
-  await db.auditLog.create({ data: { actorId, action: "week.checklist", entity: "week", entityId: weekId, after: { item, done } } });
-}
-
 export type PayoutRow = AffiliateWeek & { affiliate: Affiliate };
 
 /** CSV for the payout list: what ops needs to send each payment. */

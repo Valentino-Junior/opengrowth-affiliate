@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { AffiliateWeekStatus } from "@prisma/client";
-import { checklistAction, closeDueWeeksAction } from "@/app/actions/payouts";
+import { closeDueWeeksAction } from "@/app/actions/payouts";
 import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { FLAG_REASON_LABEL, formatDateTime, methodLabel } from "@/lib/labels";
+import { formatDateTime, methodLabel } from "@/lib/labels";
 import { formatCents, formatRate } from "@/lib/money";
 import { getSettings } from "@/lib/settings";
 import { formatWeekRange, localDay } from "@/lib/weeks";
@@ -62,28 +62,34 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
     db.affiliateWeek.findMany({ where: { weekId: week.id }, include: { affiliate: true }, orderBy: { affiliate: { referralCode: "asc" } } }),
     db.player.count({ where: { linkStatus: { in: ["pending", "sent_to_ops"] } } }),
     db.transaction.count({ where: { status: "pending", occurredAt: { lt: new Date(week.endsOn.getTime() + 2 * 864e5) } } }),
-    db.flag.findMany({ where: { status: "open" }, include: { affiliate: true, player: true } }),
+    db.flag.count({ where: { status: "open" } }),
   ]);
 
-  const heldFlags = openFlags.filter((f) => rows.some((r) => r.affiliateId === f.affiliateId && r.status === "flagged"));
+  // Rows with something to pay (or something stopping it) come first; carried and under-minimum rows pay nothing this week.
+  const toPay = rows.filter((r) => r.status !== "carried" && r.status !== "under_minimum");
+  const nothingDue = rows.filter((r) => r.status === "carried" || r.status === "under_minimum");
   const sum = (f: (r: (typeof rows)[number]) => bigint) => rows.reduce((t, r) => t + f(r), 0n);
   const readyCents = sum((r) => (r.status === "ready" ? r.payableCents : 0n));
   const paidCents = sum((r) => (r.status === "paid" ? r.payableCents : 0n));
-  const carriedCount = rows.filter((r) => r.status === "carried" || r.status === "under_minimum").length;
-  const reviewCount = rows.filter((r) => r.status === "flagged" || r.status === "needs_id").length;
-  const manual = week.checklist as Record<string, boolean>;
+  const readyCount = rows.filter((r) => r.status === "ready").length;
+  const onHold = rows.filter((r) => r.status === "flagged" || r.status === "needs_id").length;
   const rate = formatRate(week.rateBp ?? settings.commissionRateBp);
   const payDay = new Date(`${ymd(week.payoutDate)}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
-  const checklist: { label: string; done: boolean; auto: boolean }[] = [
-    { label: "All new players tagged and confirmed", done: pendingPlayers === 0, auto: true },
-    { label: "Verify queue on the transaction desk is empty", done: pendingEntries === 0, auto: true },
-    { label: "Week closed and totals calculated from verified entries", done: true, auto: true },
-    { label: "Flags reviewed (shared payment handles, self-referrals)", done: openFlags.length === 0, auto: true },
-    { label: `ID verified for payouts over ${formatCents(week.idThresholdCents ?? 0n, { whole: true })} and prize winners`, done: !rows.some((r) => r.status === "needs_id"), auto: true },
-    { label: "Payouts sent by each affiliate's method", done: !!manual.payouts_sent, auto: false },
-    { label: "Rows marked paid and carry-forwards logged", done: !rows.some((r) => r.status === "ready"), auto: true },
-  ];
+  // Only what's still in the way. Each line disappears once it's done.
+  const blockers = [
+    pendingPlayers ? { text: `${pendingPlayers} new ${pendingPlayers === 1 ? "player is" : "players are"} still waiting at the desk.` } : null,
+    pendingEntries ? { text: `${pendingEntries} ${pendingEntries === 1 ? "entry is" : "entries are"} still waiting in the desk's verify queue.` } : null,
+    openFlags ? { text: `${openFlags} open ${openFlags === 1 ? "flag" : "flags"} to review.`, href: "/ops/verification/flags", link: "Review flags" } : null,
+  ].filter((b) => b !== null);
+
+  const idx = runWeeks.findIndex((w) => w.id === week.id);
+  const weekLink = (w: (typeof runWeeks)[number] | undefined, label: string) =>
+    w ? (
+      <Link href={`/ops/payouts?week=${ymd(w.startsOn)}`} className="text-sm text-muted no-underline hover:text-ink">
+        {label}
+      </Link>
+    ) : null;
 
   return (
     <>
@@ -91,22 +97,11 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
         <PageTitle
           eyebrow="MONDAY PAYOUT RUN"
           title={`Week of ${formatWeekRange(bounds)}`}
-          lead={`Pay out ${payDay} · Commission rate ${rate} · Minimum payout ${formatCents(week.minPayoutCents ?? 0n, { whole: true })}`}
+          lead={`Pay out ${payDay} · Commission ${rate} · Minimum ${formatCents(week.minPayoutCents ?? 0n, { whole: true })}`}
         />
-        <div className="flex flex-wrap items-center gap-3">
-          {runWeeks.length > 1 ? (
-            <nav aria-label="Other weeks" className="flex flex-wrap gap-1 text-sm">
-              {runWeeks.slice(0, 6).map((w) => (
-                <Link
-                  key={w.id}
-                  href={`/ops/payouts?week=${ymd(w.startsOn)}`}
-                  className={`rounded-full px-3 py-1.5 no-underline ${w.id === week.id ? "bg-surface text-ink" : "text-muted"}`}
-                >
-                  {formatWeekRange({ startsOn: ymd(w.startsOn), endsOn: ymd(w.endsOn) })}
-                </Link>
-              ))}
-            </nav>
-          ) : null}
+        <div className="flex flex-wrap items-center gap-4">
+          {weekLink(runWeeks[idx + 1], "← Earlier week")}
+          {weekLink(runWeeks[idx - 1], "Later week →")}
           <a href={`/ops/payouts/export?week=${bounds.startsOn}`} className="rounded-full border border-line px-5 py-2.5 text-sm font-bold text-ink no-underline hover:border-muted">
             Export payout list
           </a>
@@ -115,85 +110,55 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
 
       {closeBanner}
 
-      <section aria-label="Run summary" className="grid grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
-        <Stat label="Gross profit from referred players" value={formatCents(sum((r) => r.grossProfitCents), { whole: true })} />
-        <Stat label="Ready to pay" value={formatCents(readyCents)} note={paidCents ? `${formatCents(paidCents)} already paid` : undefined} accent="gold" />
-        <Stat label="Carried or under minimum" value={String(carriedCount)} />
-        <Stat label="Needs review" value={String(reviewCount)} accent={reviewCount ? undefined : "green"} />
+      {blockers.length ? (
+        <Card tone="gold" className="flex flex-col gap-2">
+          <h2 className="m-0 text-base font-extrabold">Before you pay</h2>
+          <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-sm">
+            {blockers.map((b) => (
+              <li key={b.text}>
+                {b.text}
+                {b.href ? (
+                  <>
+                    {" "}
+                    <Link href={b.href}>{b.link}</Link>
+                  </>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
+      <section aria-label="Run summary" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <Stat label={`Ready to pay · ${readyCount} ${readyCount === 1 ? "affiliate" : "affiliates"}`} value={formatCents(readyCents)} accent="gold" />
+        <Stat label="Paid" value={formatCents(paidCents)} accent={paidCents && !readyCount ? "green" : undefined} />
+        <Stat label="On hold" value={String(onHold)} note={onHold ? "Flag or ID to clear first" : undefined} />
       </section>
 
-      <Card className="flex flex-col gap-3">
-        <h2 className="m-0 text-xl font-extrabold">Monday checklist</h2>
-        <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {checklist.map((c) => (
-            <li key={c.label} className="flex items-center gap-3 text-sm">
-              <span
-                aria-hidden
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${c.done ? "border-green bg-green text-bg" : "border-line text-transparent"}`}
-              >
-                ✓
-              </span>
-              <span className={c.done ? "text-ink" : "text-muted"}>
-                {c.label}
-                <span className="sr-only">{c.done ? " (done)" : " (not done)"}</span>
-              </span>
-              {!c.auto ? (
-                <ActionForm action={checklistAction} hidden={{ weekId: week.id, done: String(!c.done) }}>
-                  <SubmitButton variant="ghost" className="!px-3 !py-1 text-xs">
-                    {c.done ? "Undo" : "Tick"}
-                  </SubmitButton>
-                </ActionForm>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card className="flex flex-col gap-3 !px-0">
-        <div className="px-6">
-          <h2 className="m-0 text-xl font-extrabold">Affiliate payouts</h2>
-          <p className="m-0 mt-1 text-sm text-muted">
-            Net = gross profit + carry-forward. Commission = {rate} of net, never below $0. Amounts under the minimum roll into the next payout.
-          </p>
-        </div>
-        {heldFlags.length ? (
-          <div role="note" className="mx-6 flex flex-col gap-1 rounded-[10px] border border-red/40 bg-red/10 px-4 py-3 text-sm">
-            {heldFlags.map((f) => (
-              <span key={f.id}>
-                <strong>{f.affiliate.legalName}</strong> is on hold: {FLAG_REASON_LABEL[f.reason].toLowerCase()}
-                {f.player ? ` (player ${f.player.handle})` : ""}. Review the flag before paying.
-              </span>
-            ))}
-          </div>
-        ) : null}
+      <Card className="!px-0 !pt-2">
         <Table>
           <thead>
             <tr>
               <Th>Affiliate</Th>
-              <Th className="text-right">Players</Th>
-              <Th className="text-right">Gross profit</Th>
-              <Th className="text-right">Carry-forward</Th>
-              <Th className="text-right">Net</Th>
-              <Th className="text-right">Commission</Th>
-              <Th>Method</Th>
+              <Th className="text-right">Pay</Th>
+              <Th>Send to</Th>
               <Th>Status</Th>
               <Th>Action</Th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? <EmptyRow cols={9}>No affiliate had verified activity this week.</EmptyRow> : null}
-            {rows.map((r) => (
+            {toPay.length === 0 ? <EmptyRow cols={5}>Nobody is owed a payout this week.</EmptyRow> : null}
+            {toPay.map((r) => (
               <tr key={r.id}>
                 <Td className="font-semibold whitespace-nowrap">{r.affiliate.legalName}</Td>
-                <Td className="text-right">{r.playerCount}</Td>
-                <Td className="text-right">{formatCents(r.grossProfitCents, { whole: true })}</Td>
-                <Td className={`text-right ${r.carryInCents < 0n ? "text-orange" : ""}`}>{formatCents(r.carryInCents, { whole: true })}</Td>
-                <Td className="text-right">{formatCents(r.netCents, { whole: true })}</Td>
                 <Td className="text-right font-bold">
-                  {formatCents(r.commissionCents)}
-                  {r.rolledInCents > 0n ? <span className="block text-xs font-normal text-muted">+{formatCents(r.rolledInCents)} rolled in</span> : null}
+                  {formatCents(r.status === "ready" || r.status === "paid" ? r.payableCents : r.commissionCents)}
+                  {r.rolledInCents > 0n ? <span className="block text-xs font-normal text-muted">incl. {formatCents(r.rolledInCents)} rolled in</span> : null}
                 </Td>
-                <Td className="whitespace-nowrap">{methodLabel(r.affiliate.payoutMethod)}</Td>
+                <Td className="whitespace-nowrap">
+                  {methodLabel(r.affiliate.payoutMethod)}
+                  {r.affiliate.payoutHandle ? <span className="text-muted"> · {r.affiliate.payoutHandle}</span> : null}
+                </Td>
                 <Td>
                   <Pill tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Pill>
                 </Td>
@@ -226,6 +191,26 @@ export default async function PayoutRunPage({ searchParams }: { searchParams: Pr
           </tbody>
         </Table>
       </Card>
+
+      {nothingDue.length ? (
+        <details className="rounded-card border border-line bg-surface px-6 py-4">
+          <summary className="cursor-pointer text-sm font-semibold text-muted">
+            Nothing to pay this week: {nothingDue.length} {nothingDue.length === 1 ? "affiliate" : "affiliates"}
+          </summary>
+          <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0 text-sm">
+            {nothingDue.map((r) => (
+              <li key={r.id} className="flex flex-wrap justify-between gap-2">
+                <span className="font-semibold">{r.affiliate.legalName}</span>
+                <span className="text-muted">
+                  {r.status === "carried"
+                    ? `${formatCents(r.netCents, { whole: true })} net loss carries into next week`
+                    : `${formatCents(r.commissionCents)} is under the minimum and rolls into the next payout`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </>
   );
 }
