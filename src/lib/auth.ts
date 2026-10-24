@@ -84,6 +84,6 @@ export function homeFor(role: Role): string {
     case "ops":
       return "/ops";
     case "admin":
-      return "/admin/settings";
+      return "/ops";
   }
 }

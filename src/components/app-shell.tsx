@@ -34,9 +34,9 @@ function navFor(area: Area, role: Role): NavItem[] {
         { href: "/desk/queue", label: "Verify queue", match: ["/desk/entries"] },
       ];
     case "ops":
-      return role === "admin" ? [...ops, { href: "/admin/settings", label: "Settings" }] : ops;
     case "admin":
-      return [{ href: "/admin/settings", label: "Settings" }, ...ops];
+      // Admin runs ops too: same tabs, with Settings last.
+      return role === "admin" ? [...ops, { href: "/admin/settings", label: "Settings" }] : ops;
   }
 }
 
