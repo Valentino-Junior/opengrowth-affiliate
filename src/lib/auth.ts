@@ -63,7 +63,7 @@ export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>
 /** Who may enter each area. The desk is for employees only; ops and admin work in Ops (admin also has Settings). */
 export const AREA_ROLES = {
   affiliate: ["affiliate"],
-  desk: ["employee"],
+  desk: ["employee", "admin"], // admin can do everything; ops and desk stay separate
   ops: ["ops", "admin"],
   admin: ["admin"],
 } as const satisfies Record<string, readonly Role[]>;

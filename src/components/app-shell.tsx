@@ -47,13 +47,38 @@ const brandFor: Record<Area, { suffix?: string; tag?: string }> = {
   admin: { suffix: "ADMIN", tag: "OWNER ONLY" },
 };
 
+/** Admin can work in both areas; this flips between them. */
+function AreaSwitch({ current }: { current: "ops" | "desk" }) {
+  const areas = [
+    { key: "ops", href: "/ops", label: "Ops" },
+    { key: "desk", href: "/desk", label: "Desk" },
+  ] as const;
+  return (
+    <nav aria-label="Area" className="flex rounded-full border border-line p-0.5 text-xs font-bold">
+      {areas.map((a) => (
+        <Link
+          key={a.key}
+          href={a.href}
+          aria-current={a.key === current ? "page" : undefined}
+          className={`rounded-full px-3 py-1 no-underline ${a.key === current ? "bg-gold text-bg" : "text-muted hover:text-ink"}`}
+        >
+          {a.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 export function AppShell({ area, user, children }: { area: Area; user: CurrentUser; children: React.ReactNode }) {
   const name = displayName(user);
   return (
     <>
       <header className="border-b border-line px-4 sm:px-8">
         <div className="mx-auto flex min-h-[76px] max-w-[1200px] flex-wrap items-center justify-between gap-4 py-3">
-          <Brand {...brandFor[area]} />
+          <div className="flex items-center gap-4">
+            <Brand {...brandFor[area]} />
+            {user.role === "admin" ? <AreaSwitch current={area === "desk" ? "desk" : "ops"} /> : null}
+          </div>
           <div className="order-3 -mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 sm:-mx-8 sm:w-[calc(100%+4rem)] sm:px-8 lg:order-none lg:mx-0 lg:w-auto lg:px-0">
             <NavLinks items={navFor(area, user.role)} />
           </div>

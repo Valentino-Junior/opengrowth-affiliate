@@ -66,6 +66,17 @@ test("desk and ops are separate: neither can open the other's area", async ({ pa
   }
 });
 
+test("admin can work in both ops and the desk", async ({ page }) => {
+  await login(page, "admin@opengrowth.local");
+  const area = page.getByRole("navigation", { name: "Area" });
+  await area.getByRole("link", { name: "Desk" }).click();
+  await expect(page).toHaveURL("/desk");
+  await page.goto("/desk/queue");
+  await expect(page).toHaveURL("/desk/queue");
+  await area.getByRole("link", { name: "Ops" }).click();
+  await expect(page).toHaveURL("/ops");
+});
+
 test("an affiliate sees their referral code on their profile, not the dashboard", async ({ page }) => {
   await login(page, "affiliate02@opengrowth.local");
   await expect(page.getByRole("region", { name: "Referral code" })).toHaveCount(0);
@@ -78,6 +89,7 @@ test("an affiliate sees their referral code on their profile, not the dashboard"
 
 test("admin saves settings and the public page follows", async ({ page }) => {
   await login(page, "admin@opengrowth.local");
+  await page.goto("/admin/settings");
   await page.getByLabel("Minimum payout ($)").fill("15");
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByRole("status")).toHaveText("Saved.");
