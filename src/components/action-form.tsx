@@ -2,6 +2,7 @@
 
 import type { ActionState } from "@/lib/errors";
 import { Flash, useFlashActionState } from "./flash";
+import { CopyValue } from "./copy-value";
 
 type ServerAction = (prev: ActionState, form: FormData) => Promise<ActionState>;
 
@@ -42,11 +43,13 @@ export function ActionForm({
         <Flash nonce={state.nonce} tone="success" persist={!!state.detail} className="w-full basis-full">
           {state.message}
           {state.detail ? (
-            <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[10px] border border-line-green bg-surface-green p-3 text-ink">
+            <dl className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1 rounded-[10px] border border-line-green bg-surface-green p-3 text-ink">
               {Object.entries(state.detail).map(([k, v]) => (
                 <div key={k} className="contents">
                   <dt className="text-muted">{k}</dt>
-                  <dd className="m-0 font-mono font-bold">{v}</dd>
+                  <dd className="m-0 -my-0.5 -ml-1.5">
+                    <CopyValue value={v} label={k} />
+                  </dd>
                 </div>
               ))}
             </dl>
