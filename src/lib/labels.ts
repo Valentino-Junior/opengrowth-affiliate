@@ -1,4 +1,6 @@
-import type { FlagReason, PaymentMethod } from "@prisma/client";
+import type { FlagReason, PaymentMethod, Role } from "@prisma/client";
+
+export const ROLE_LABEL: Record<Role, string> = { affiliate: "Affiliate", employee: "Desk employee", ops: "Ops manager", admin: "Admin" };
 
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "cash_app", label: "Cash App" },

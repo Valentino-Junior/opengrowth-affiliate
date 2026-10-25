@@ -6,15 +6,34 @@ import { Button } from "./ui";
 // A button that opens a centred window with whatever is passed as children (usually a form).
 // ✕, Esc or a click outside closes it.
 
-export function ModalButton({ label, title, description, children }: { label: string; title: string; description?: string; children: React.ReactNode }) {
+export function ModalButton({
+  label,
+  title,
+  description,
+  variant,
+  plus = true,
+  className,
+  children,
+}: {
+  label: string;
+  title: string;
+  description?: string;
+  variant?: "gold" | "ghost" | "danger";
+  /** The "+" icon, for buttons that add something. */
+  plus?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   return (
     <>
-      <Button type="button" onClick={() => dialog.current?.showModal()} aria-haspopup="dialog">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
+      <Button type="button" variant={variant} className={className} onClick={() => dialog.current?.showModal()} aria-haspopup="dialog">
+        {plus ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        ) : null}
         {label}
       </Button>
       <dialog

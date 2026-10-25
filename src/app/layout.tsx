@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${bodoni.variable} ${manrope.variable}`}>
-      <body className="grid min-h-screen grid-rows-[1fr_auto] antialiased">
+      <body className="grid min-h-screen grid-cols-[minmax(0,1fr)] grid-rows-[1fr_auto] antialiased">
         <div>{children}</div>
         <SiteFooter />
       </body>

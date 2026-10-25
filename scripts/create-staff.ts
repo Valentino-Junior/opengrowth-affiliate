@@ -3,7 +3,7 @@
 //   npm run create-staff -- --role admin --email owner@example.com --phone "555-123-4567" --name "Owner" --code AD
 //   npm run create-staff -- --role employee --email a1@example.com --phone "555-123-0001" --name "Jordan" --code A1 --team "Team A"
 //
-// Prints a one-time password unless STAFF_PASSWORD is set. The person changes nothing else; ops can add more staff later.
+// Prints a one-time password unless STAFF_PASSWORD is set. Only the first admin needs this; the admin adds everyone else under Staff.
 
 import { randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";

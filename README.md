@@ -147,7 +147,7 @@ and drop `PW_CHANNEL=chrome`.
 
 [`DEPLOY.md`](DEPLOY.md) walks through hosting on **one Hostinger VPS** with Docker:
 PostgreSQL, the app, the worker and Caddy (automatic HTTPS), plus nightly backups and switching uploads to AWS S3.
-On a real server you create real staff accounts with `npm run create-staff`; the sample data refuses to load in production.
+On a real server you create the first admin with `npm run create-staff`, and the admin adds everyone else under **Staff**. The sample data refuses to load in production.
 
 ---
 

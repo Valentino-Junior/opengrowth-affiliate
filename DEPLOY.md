@@ -54,15 +54,16 @@ Open `https://opengrowth.yourdomain.com`: you should see the How it works page.
 
 ## 6. Create the first accounts
 
-The demo seed is refused in production. Create real staff instead (each prints a one-time password):
+The demo seed is refused in production. Create the first admin from the command line (it prints a one-time password):
 
 ```sh
 docker compose exec app npm run create-staff -- --role admin --email you@yourdomain.com --phone "555-123-4567" --name "Owner" --code AD
-docker compose exec app npm run create-staff -- --role ops --email ops@yourdomain.com --phone "555-123-4568" --name "Ops Manager" --code OP
-docker compose exec app npm run create-staff -- --role employee --email a1@yourdomain.com --phone "555-123-0001" --name "Desk A1" --code A1 --team "Team A"
 ```
 
-Then log in as admin → **Settings** and check the rate, minimum payout, ID threshold, badges, prizes and group chat link.
+Log in as that admin, change the password on your profile, then add everyone else under **Staff** (ops managers and desk employees).
+Staff is also where you reset a forgotten staff password or turn off someone who has left.
+
+Then open **Settings** and check the rate, minimum payout, ID threshold, badges, prizes and group chat link.
 Affiliates sign up themselves at `/join` (ops approves them) or ops registers them on **Affiliates and players**.
 
 ## 7. Nightly backups

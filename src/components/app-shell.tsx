@@ -35,8 +35,10 @@ function navFor(area: Area, role: Role): NavItem[] {
       ];
     case "ops":
     case "admin":
-      // Admin runs ops too: same tabs, with Settings last.
-      return role === "admin" ? [...ops, { href: "/admin/settings", label: "Settings" }] : ops;
+      // Admin runs ops too: same tabs, then Staff and Settings.
+      return role === "admin"
+        ? [...ops, { href: "/admin/staff", label: "Staff" }, { href: "/admin/settings", label: "Settings" }]
+        : ops;
   }
 }
 
@@ -71,6 +73,9 @@ function AreaSwitch({ current }: { current: "ops" | "desk" }) {
 
 export function AppShell({ area, user, children }: { area: Area; user: CurrentUser; children: React.ReactNode }) {
   const name = displayName(user);
+  const nav = navFor(area, user.role);
+  // Admin's seven tabs don't fit beside the logo, so they get their own row under it.
+  const navRow = nav.length > 5 ? "order-3 w-full overflow-x-auto" : "order-3 -mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 sm:-mx-8 sm:w-[calc(100%+4rem)] sm:px-8 lg:order-none lg:mx-0 lg:w-auto lg:px-0";
   return (
     <>
       <header className="border-b border-line px-4 sm:px-8">
@@ -79,8 +84,8 @@ export function AppShell({ area, user, children }: { area: Area; user: CurrentUs
             <Brand {...brandFor[area]} />
             {user.role === "admin" ? <AreaSwitch current={area === "desk" ? "desk" : "ops"} /> : null}
           </div>
-          <div className="order-3 -mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 sm:-mx-8 sm:w-[calc(100%+4rem)] sm:px-8 lg:order-none lg:mx-0 lg:w-auto lg:px-0">
-            <NavLinks items={navFor(area, user.role)} />
+          <div className={navRow}>
+            <NavLinks items={nav} />
           </div>
           <div className="flex items-center gap-3 text-sm">
             <NotificationBell />

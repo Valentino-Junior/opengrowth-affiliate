@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { changePasswordAction, updateNameAction, updatePayoutAction } from "@/app/actions/account";
 import { requireRole } from "@/lib/auth";
-import { methodLabel } from "@/lib/labels";
+import { ROLE_LABEL, methodLabel } from "@/lib/labels";
 import { ActionForm } from "@/components/action-form";
 import { CopyCode } from "@/components/copy-code";
 import { PayoutFields } from "@/components/payout-fields";
@@ -16,7 +16,6 @@ import { appOrigin } from "@/lib/origin";
 
 export const metadata = { title: "My profile · Opengrowth" };
 
-const ROLE_LABEL = { affiliate: "Affiliate", employee: "Desk employee", ops: "Ops manager", admin: "Admin" } as const;
 const STATUS = {
   pending_approval: { label: "Waiting for approval", tone: "gold" },
   active: { label: "Active", tone: "green" },
