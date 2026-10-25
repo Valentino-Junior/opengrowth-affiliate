@@ -37,7 +37,7 @@ export default async function StaffPage() {
               options={[
                 { value: "employee", label: "Desk employee: adds players, logs and verifies money" },
                 { value: "ops", label: "Ops manager: payouts, IDs, flags, affiliates" },
-                { value: "admin", label: "Admin: everything, including Staff and Settings" },
+                { value: "admin", label: "Admin: all ops work, plus Staff and Settings" },
               ]}
             />
             <div className="grid gap-4 sm:grid-cols-2">
