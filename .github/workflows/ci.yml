@@ -1,0 +1,118 @@
+# Every push and pull request: lint, type check, unit tests, migrations check, production build, browser tests.
+# On main, when everything passes: build the Docker image once and hand it to the Deploy workflow
+# (which waits for an approval click if the "production" environment requires reviewers).
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: opengrowth
+          POSTGRES_PASSWORD: opengrowth
+          POSTGRES_DB: opengrowth
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U opengrowth" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://opengrowth:opengrowth@localhost:5432/opengrowth
+      SHADOW_DATABASE_URL: postgresql://opengrowth:opengrowth@localhost:5432/shadow
+      APP_TIMEZONE: America/New_York
+      STORAGE_DIR: ./storage
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npx prisma generate && npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Known vulnerabilities (critical) in production dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Every schema change has a migration
+        run: |
+          psql "$DATABASE_URL" -c "CREATE DATABASE shadow"
+          npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "$SHADOW_DATABASE_URL" --exit-code
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Production build
+        run: npm run build
+      - name: Browser tests
+        run: |
+          npx playwright install --with-deps chromium
+          LOGIN_LIMIT_PER_IP=5000 npx next start -p 3000 > server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/health && break; sleep 1; done
+          npm run test:e2e
+      - name: Keep the failure screenshots and server log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failures
+          path: |
+            test-results/
+            server.log
+          retention-days: 7
+
+  image:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push ghcr.io image tagged with the commit
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/opengrowth-affiliate:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/opengrowth-affiliate:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: image
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ needs.image.outputs.tag }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: read

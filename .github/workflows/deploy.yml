@@ -1,0 +1,58 @@
+# Puts one image on the VPS. Called by CI after a green build of main, or run by hand
+# (Actions → Deploy → Run workflow) with an older commit SHA to roll back.
+#
+# Needs these repository secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_KNOWN_HOSTS (see DEPLOY.md, "Automatic deploys").
+
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Commit SHA of the image to deploy (from a green CI run)
+        type: string
+        required: true
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/opengrowth-affiliate:${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docker-compose.yml
+            deploy
+      - name: SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Copy the compose file, Caddyfile and scripts
+        run: scp -i ~/.ssh/id_deploy docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/opengrowth/ &&
+          scp -i ~/.ssh/id_deploy -r deploy ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/opengrowth/
+      - name: Pull the image and restart
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | ssh -i ~/.ssh/id_deploy ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "docker login ghcr.io -u ${{ github.actor }} --password-stdin && bash /opt/opengrowth/deploy/remote-deploy.sh '$IMAGE'"
+      - name: Public health check
+        if: vars.APP_URL != ''
+        run: curl -sf --retry 10 --retry-delay 3 --retry-all-errors "${{ vars.APP_URL }}/api/health"

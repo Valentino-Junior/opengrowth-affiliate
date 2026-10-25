@@ -3,6 +3,8 @@ README.md
 DEPLOY.md
 node_modules
 .next
+.next-test
+.github
 storage
 test-results
 playwright-report

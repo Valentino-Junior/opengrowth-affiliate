@@ -23,7 +23,8 @@ services:
 
   app:
     build: .
-    image: opengrowth-web
+    # Set by the Deploy workflow (an image from GitHub); without it, `docker compose up -d --build` builds here.
+    image: ${APP_IMAGE:-opengrowth-web}
     restart: unless-stopped
     env_file: .env
     environment:
@@ -42,7 +43,7 @@ services:
       start_period: 30s
 
   worker:
-    image: opengrowth-web
+    image: ${APP_IMAGE:-opengrowth-web}
     restart: unless-stopped
     command: ["npx", "tsx", "scripts/worker.ts"]
     env_file: .env

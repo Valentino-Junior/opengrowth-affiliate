@@ -110,11 +110,46 @@ Without this the app still works, but it can't send the 6-digit email confirmati
 5. Test it: sign up at `/join` with an email you own; the code should arrive within a minute.
    Every email and its delivery status is recorded in the `email_messages` table.
 
+## 10. Automatic deploys (CI/CD with GitHub Actions)
+
+After this, every push to `main` is tested, built and (after your approval) put live. Nothing is built on the VPS.
+
+| Workflow | Runs | Does |
+| --- | --- | --- |
+| **CI** (`.github/workflows/ci.yml`) | Every push and pull request | Lint, type check, unit tests, migration check, production build, all browser tests. On `main`, if green: builds the Docker image and pushes it to GitHub Packages, tagged with the commit. |
+| **Deploy** (`.github/workflows/deploy.yml`) | After a green `main` build, or by hand | Copies `docker-compose.yml` and `deploy/` to the VPS, pulls that image, restarts, waits for the health check. |
+
+**One-time setup**
+
+1. On the VPS, make a deploy user that can run Docker and owns the app folder:
+   ```sh
+   adduser --disabled-password --gecos "" deploy && usermod -aG docker deploy
+   chown -R deploy:deploy /opt/opengrowth
+   ```
+2. On your computer, make a key just for deploys and allow it on the VPS:
+   ```sh
+   ssh-keygen -t ed25519 -f opengrowth-deploy -N "" -C "github-deploy"
+   ssh-copy-id -i opengrowth-deploy.pub deploy@YOUR_VPS_IP     # or paste the .pub into /home/deploy/.ssh/authorized_keys
+   ssh-keyscan YOUR_VPS_IP > known_hosts.txt
+   ```
+3. On GitHub: **Settings → Secrets and variables → Actions**.
+   - Secrets: `VPS_HOST` (the VPS IP), `VPS_USER` (`deploy`), `VPS_SSH_KEY` (the whole `opengrowth-deploy` file, the private one),
+     `VPS_KNOWN_HOSTS` (the contents of `known_hosts.txt`).
+   - Variable: `APP_URL` (`https://opengrowth.yourdomain.com`), used for a public health check after each deploy.
+   Then delete the key files from your computer, or keep the private one somewhere safe.
+4. **Settings → Environments → New environment** named `production` → tick **Required reviewers** and add yourself.
+   Every deploy now waits for your **Approve** click in the Actions tab. Also set **Deployment branches** to `main`.
+5. **Settings → Branches → Add rule** for `main`: require the **CI / check** status to pass before merging.
+
+**Rolling back**: Actions → **Deploy** → **Run workflow** → paste the commit SHA of an earlier green build.
+Database migrations only go forward, so a rollback across a migration needs care; restore a backup if in doubt.
+
 ## Everyday operations
 
 | Task | Command (in `/opt/opengrowth`) |
 | --- | --- |
-| Update to a new version | `git pull && docker compose up -d --build` |
+| Update to a new version | Push to `main`, then approve the deploy in GitHub Actions (or by hand: `git pull && docker compose up -d --build`) |
+| Which version is live? | `grep APP_IMAGE .env` (the part after `:` is the commit) |
 | See logs | `docker compose logs -f app` / `docker compose logs -f worker` |
 | Restart | `docker compose restart app worker` |
 | Is it healthy? | `curl https://opengrowth.yourdomain.com/api/health` |
