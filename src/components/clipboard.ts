@@ -20,11 +20,15 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   area.style.position = "fixed";
   area.style.top = "0";
   area.style.opacity = "0";
-  document.body.appendChild(area);
+  // Inside an open pop-up (<dialog>) the rest of the page can't take focus or a selection, so the box goes in the pop-up.
+  (active?.closest("dialog[open]") ?? document.body).appendChild(area);
+  area.focus();
   area.select();
+  area.setSelectionRange(0, text.length);
   let ok = false;
   try {
-    ok = document.execCommand("copy");
+    // execCommand can report success without copying anything if the selection didn't take.
+    ok = area.selectionEnd - area.selectionStart === text.length && document.execCommand("copy");
   } catch {
     ok = false;
   }
