@@ -16,7 +16,7 @@ test("admin adds a desk employee, who logs in with the temporary password", asyn
   await form.getByLabel("Role").selectOption("employee");
   await form.getByLabel("Name").fill("Taylor Desk");
   await form.getByLabel("Code").fill("a4");
-  await form.getByLabel("Email").fill("a4@opengrowth.local");
+  await form.getByLabel("Email", { exact: true }).fill("a4@opengrowth.local");
   await form.getByLabel("Phone number").fill("555-000-0044");
   await form.getByLabel("Team").fill("Team A");
   await form.getByRole("button", { name: "Create login" }).click();
@@ -30,7 +30,7 @@ test("admin adds a desk employee, who logs in with the temporary password", asyn
   await form.getByLabel("Role").selectOption("employee");
   await form.getByLabel("Name").fill("Someone Else");
   await form.getByLabel("Code").fill("A4");
-  await form.getByLabel("Email").fill("other@opengrowth.local");
+  await form.getByLabel("Email", { exact: true }).fill("other@opengrowth.local");
   await form.getByLabel("Phone number").fill("555-000-0045");
   await form.getByRole("button", { name: "Create login" }).click();
   await expect(form.getByText("The code A4 is taken. Pick another.")).toBeVisible();
