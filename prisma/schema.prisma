@@ -458,7 +458,7 @@ model RateLimit {
 model VerificationCode {
   id         String    @id @default(uuid()) @db.Uuid
   userId     String    @map("user_id") @db.Uuid
-  purpose    String // "email"
+  purpose    String // "email" | "password"
   codeHash   String    @map("code_hash")
   expiresAt  DateTime  @map("expires_at") @db.Timestamptz
   attempts   Int       @default(0)
@@ -476,7 +476,7 @@ model VerificationCode {
 model EmailMessage {
   id         String   @id @default(uuid()) @db.Uuid
   to         String
-  kind       String // "email_code" | "approved" | "declined" | "welcome"
+  kind       String // "email_code" | "password_code" | "approved" | "declined" | "welcome"
   subject    String
   status     String // "sent" | "logged" | "failed"
   body       String?

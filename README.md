@@ -118,7 +118,7 @@ npm start             # http://localhost:3000
 npm test                                   # 21 rule tests: commission, carry-forward, weeks, money
 ```
 
-The 64 browser tests run against a production build. Build it into its own folder and port, so a running
+The 66 browser tests run against a production build. Build it into its own folder and port, so a running
 `npm run dev` isn't disturbed:
 
 ```sh

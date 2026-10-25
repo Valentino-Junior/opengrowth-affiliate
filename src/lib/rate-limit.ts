@@ -37,4 +37,5 @@ export const LIMITS = {
   failedLoginsPerEmail: { limit: 10, window: 15 * 60 },
   affiliateSignupPerIp: { limit: 5, window: 60 * 60 },
   playerSignupPerIp: { limit: 10, window: 60 * 60 },
+  passwordResetPerIp: { limit: 20, window: 60 * 60 }, // asking for codes and trying them, together
 } as const;

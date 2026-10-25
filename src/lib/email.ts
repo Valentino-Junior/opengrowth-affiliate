@@ -5,7 +5,7 @@
 
 import { db } from "./db";
 
-export type EmailKind = "email_code" | "approved" | "declined" | "welcome";
+export type EmailKind = "email_code" | "password_code" | "approved" | "declined" | "welcome";
 
 const FROM = process.env.EMAIL_FROM || "Opengrowth <no-reply@opengrowth.local>";
 
@@ -64,6 +64,15 @@ export function emailCodeMessage(to: string, code: string) {
     kind: "email_code",
     subject: `${code} is your Opengrowth code`,
     text: `Your code to confirm this email address is:\n\n${code}\n\nIt works for 15 minutes. If you didn't sign up for Opengrowth, you can ignore this email.`,
+  });
+}
+
+export function passwordCodeMessage(to: string, code: string) {
+  return sendEmail({
+    to,
+    kind: "password_code",
+    subject: `${code} is your Opengrowth password reset code`,
+    text: `Someone asked to reset the password for this Opengrowth account. Your code is:\n\n${code}\n\nIt works for 15 minutes. If it wasn't you, ignore this email: your password stays the same.`,
   });
 }
 

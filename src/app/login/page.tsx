@@ -9,7 +9,8 @@ export const metadata = { title: "Log in · Opengrowth" };
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ password?: string }> }) {
   const user = await getCurrentUser();
   if (user) redirect(homeFor(user.role));
-  const passwordChanged = (await searchParams).password === "changed";
+  const { password } = await searchParams;
+  const notice = password === "changed" ? "Password changed." : password === "reset" ? "Your new password is set." : null;
 
   return (
     <main className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-8 px-4 py-16">
@@ -20,9 +21,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <h1 className="m-0 font-serif text-4xl font-medium">Log in</h1>
         <p className="m-0 text-muted">Affiliates, desk staff and ops all log in here.</p>
       </div>
-      {passwordChanged ? (
+      {notice ? (
         <p role="status" className="m-0 rounded-[10px] border border-line-green bg-surface-green px-4 py-3 text-center text-sm text-green">
-          Password changed. Log in with your new password.
+          {notice} Log in with your new password.
         </p>
       ) : null}
       <LoginForm />
