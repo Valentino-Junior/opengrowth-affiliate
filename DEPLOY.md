@@ -6,10 +6,18 @@ Plan on about 30 minutes the first time.
 **You need:** a Hostinger VPS (KVM 2 or bigger, Ubuntu 24.04), a domain name, and SSH access.
 **Optional:** an AWS account for S3 uploads (otherwise uploads stay on the VPS disk).
 
-## 1. Point the domain at the VPS
+## 1. Point the subdomain at the VPS
 
-In your domain's DNS, add an **A record**: `opengrowth.yourdomain.com` → the VPS IP (shown in Hostinger hPanel → VPS).
-Wait until `ping opengrowth.yourdomain.com` answers with that IP.
+The app lives at **`affiliate.opengrowthofficial.com`**, a subdomain of the main site. The main site keeps running where it is.
+
+In the DNS of `opengrowthofficial.com` (Hostinger hPanel → **Domains** → opengrowthofficial.com → **DNS / Nameservers**), add one record:
+
+| Type | Name | Points to | TTL |
+| --- | --- | --- | --- |
+| A | `affiliate` | the VPS IP (hPanel → VPS) | 3600 |
+
+Don't change the existing `@` and `www` records: those are the main site. Wait until `ping affiliate.opengrowthofficial.com`
+answers with the VPS IP. Login cookies are set for the subdomain only, so the app and the main site never share them.
 
 ## 2. Prepare the server
 
@@ -50,14 +58,14 @@ docker compose ps              # app should become "healthy" within a minute
 ```
 
 The app applies database migrations every time it starts. Caddy fetches the HTTPS certificate on first visit.
-Open `https://opengrowth.yourdomain.com`: you should see the How it works page.
+Open `https://affiliate.opengrowthofficial.com`: you should see the How it works page.
 
 ## 6. Create the first accounts
 
 The demo seed is refused in production. Create the first admin from the command line (it prints a one-time password):
 
 ```sh
-docker compose exec app npm run create-staff -- --role admin --email you@yourdomain.com --phone "555-123-4567" --name "Owner" --code AD
+docker compose exec app npm run create-staff -- --role admin --email you@opengrowthofficial.com --phone "555-123-4567" --name "Owner" --code AD
 ```
 
 Log in as that admin, change the password on your profile, then add everyone else under **Staff** (ops managers and desk employees).
@@ -103,10 +111,12 @@ New uploads go to S3 from then on. Files uploaded before the switch stay on the 
 
 Without this the app still works, but it can't send the 6-digit email confirmation codes or the "you're approved" emails.
 
-1. Create a free account at [resend.com](https://resend.com) → **Domains** → **Add domain** → your domain (e.g. `yourdomain.com`).
-2. Add the DNS records Resend shows (TXT/MX/CNAME) at your domain provider and wait until Resend says **Verified**.
+1. Create a free account at [resend.com](https://resend.com) → **Domains** → **Add domain** → **`affiliate.opengrowthofficial.com`**.
+   Use the subdomain, not the main domain: its records sit under `affiliate`, so any email the main domain already sends
+   or receives (its MX and SPF records) is left alone.
+2. Add the DNS records Resend shows (TXT/MX/CNAME) in the `opengrowthofficial.com` DNS and wait until Resend says **Verified**.
 3. **API Keys** → **Create API key** (sending access) and copy it.
-4. In `.env` set `RESEND_API_KEY=re_…` and `EMAIL_FROM=Opengrowth <no-reply@yourdomain.com>` (an address on the verified domain), then `docker compose up -d`.
+4. In `.env` set `RESEND_API_KEY=re_…` and `EMAIL_FROM=Opengrowth <no-reply@affiliate.opengrowthofficial.com>` (already in the example file), then `docker compose up -d`.
 5. Test it: sign up at `/join` with an email you own; the code should arrive within a minute.
    Every email and its delivery status is recorded in the `email_messages` table.
 
@@ -135,7 +145,7 @@ After this, every push to `main` is tested, built and (after your approval) put 
 3. On GitHub: **Settings → Secrets and variables → Actions**.
    - Secrets: `VPS_HOST` (the VPS IP), `VPS_USER` (`deploy`), `VPS_SSH_KEY` (the whole `opengrowth-deploy` file, the private one),
      `VPS_KNOWN_HOSTS` (the contents of `known_hosts.txt`).
-   - Variable: `APP_URL` (`https://opengrowth.yourdomain.com`), used for a public health check after each deploy.
+   - Variable: `APP_URL` (`https://affiliate.opengrowthofficial.com`), used for a public health check after each deploy.
    Then delete the key files from your computer, or keep the private one somewhere safe.
 4. **Settings → Environments → New environment** named `production` → tick **Required reviewers** and add yourself.
    Every deploy now waits for your **Approve** click in the Actions tab. Also set **Deployment branches** to `main`.
@@ -152,7 +162,7 @@ Database migrations only go forward, so a rollback across a migration needs care
 | Which version is live? | `grep APP_IMAGE .env` (the part after `:` is the commit) |
 | See logs | `docker compose logs -f app` / `docker compose logs -f worker` |
 | Restart | `docker compose restart app worker` |
-| Is it healthy? | `curl https://opengrowth.yourdomain.com/api/health` |
+| Is it healthy? | `curl https://affiliate.opengrowthofficial.com/api/health` |
 | Database shell | `docker compose exec db psql -U opengrowth -d opengrowth` |
 
 The worker closes each week after Sunday 23:59 New York time and settles each month's Top 3 race. If it was down,
