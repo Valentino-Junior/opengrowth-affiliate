@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 import path from "node:path";
 import { login, logout } from "./helpers";
+import { db } from "../src/lib/db";
+import { statusBadge } from "../src/lib/affiliate-stats";
+import { formatCents } from "../src/lib/money";
+import { monthLabel, standings } from "../src/lib/race";
+import { getSettings } from "../src/lib/settings";
+import { localDay } from "../src/lib/weeks";
 
 // Phase 5 exit check: an affiliate sees the same numbers ops sees for them.
 
@@ -9,21 +15,34 @@ const fake = path.join(__dirname, "fixtures/fake.png");
 
 test.describe.configure({ mode: "serial" });
 
+test.afterAll(async () => {
+  await db.$disconnect();
+});
+
 test("Affiliate 01's dashboard matches the mockup", async ({ page }) => {
+  // The sample history sits "N weeks ago", but the badge (last month's payouts) and the race (this month)
+  // follow the calendar, so their expected values are worked out for today's date.
+  const a01 = await db.affiliate.findFirstOrThrow({ where: { legalName: "Affiliate 01" } });
+  const badge = await statusBadge(a01.id, await getSettings());
+  const table = await standings(`${localDay(new Date()).slice(0, 7)}-01`);
+  const me = table.find((s) => s.affiliateId === a01.id);
+  const gap = me && table[2] && me.rank > 3 ? table[2].grossCents - me.grossCents : null;
+
   await login(page, "affiliate01@opengrowth.local");
   await expect(page.getByText("STATUS")).toBeVisible();
-  await expect(page.getByText("Hustler")).toBeVisible(); // $94 paid in September ≥ $50
+  await expect(page.getByText(badge.name, { exact: true })).toBeVisible();
 
   const cards = page.getByRole("region", { name: "Key numbers" });
   await expect(cards.getByText("$71.00")).toBeVisible();
   await expect(cards.getByText("$38.00")).toBeVisible();
-  await expect(cards.getByText(/^Paid Mon, Oct/)).toBeVisible();
+  await expect(cards.getByText(/^Paid Mon, [A-Z][a-z]{2} \d+/)).toBeVisible();
   await expect(cards.getByText("4", { exact: true })).toBeVisible(); // active players
 
   const race = page.getByLabel("Top 3 race");
-  await expect(race.getByRole("heading")).toHaveText("You're #4. $1,130 behind 3rd place.");
-  await expect(race.getByText("$9,860")).toBeVisible();
-  await expect(race.getByText("$5,180")).toBeVisible();
+  await expect(race.getByRole("heading")).toHaveText(
+    !me ? "Get on the board this month." : gap === null ? `You're #${me.rank}. Hold your spot.` : `You're #${me.rank}. ${formatCents(gap, { whole: true })} behind 3rd place.`,
+  );
+  for (const s of table.slice(0, 3)) await expect(race.getByText(formatCents(s.grossCents, { whole: true })).first()).toBeVisible();
 
   const history = page.getByLabel("Payout history");
   await expect(history.getByText("$2,460 profit − $320 carried")).toBeVisible();
@@ -96,23 +115,50 @@ test("ops rejects an ID with a reason; the affiliate sees it and can upload agai
   await expect(page.getByText("Photo unreadable or cut off")).toBeVisible();
 });
 
-test("September prizes: release only to a verified, unflagged winner", async ({ page }) => {
+test("last month's prizes: release only to a verified, unflagged winner", async ({ page }) => {
+  // Last month's winners depend on today's date (the sample data moves through the calendar).
+  const race = await db.raceMonth.findFirstOrThrow({
+    where: { status: { not: "live" } },
+    orderBy: { month: "desc" },
+    include: { results: { where: { rank: { lte: 3 } }, orderBy: { rank: "asc" }, include: { affiliate: true } } },
+  });
+  const winners = race.results.filter((r) => r.affiliate.status !== "flagged");
+  expect(winners.length).toBeGreaterThan(1);
+  // One winner with a verified ID (to release) and one without (to hold back).
+  let ready = winners.find((r) => r.affiliate.idStatus === "verified");
+  if (!ready) {
+    ready = winners[winners.length - 1];
+    await db.affiliate.update({ where: { id: ready.affiliateId }, data: { idStatus: "verified" } });
+  }
+  const waiting = winners.find((r) => r.id !== ready.id && r.affiliate.idStatus !== "verified");
+
   await login(page, "ops@opengrowth.local");
   await page.goto("/ops/verification/prizes");
   const prizes = page.locator("#prizes");
-  await expect(prizes.getByRole("heading")).toHaveText("Top 3 prizes · September 2026");
-  await expect(prizes.getByRole("row", { name: /Affiliate 06/ }).getByText("Waiting for ID")).toBeVisible();
-  await expect(prizes.getByRole("row", { name: /Affiliate 06/ }).getByRole("button")).toHaveCount(0);
-  const third = prizes.getByRole("row", { name: /Affiliate 02/ });
-  await expect(third.getByText("Ready to release")).toBeVisible();
-  await third.getByRole("button", { name: "Release prize to Affiliate 02" }).click();
-  await expect(prizes.getByRole("row", { name: /Affiliate 02/ }).getByText("Released")).toBeVisible();
+  await expect(prizes.getByRole("heading")).toHaveText(`Top 3 prizes · ${monthLabel(race.month.toISOString().slice(0, 10))}`);
+  if (waiting) {
+    const row = prizes.getByRole("row", { name: new RegExp(waiting.affiliate.legalName) });
+    await expect(row.getByText("Waiting for ID")).toBeVisible();
+    await expect(row.getByRole("button")).toHaveCount(0);
+  }
+  const name = ready.affiliate.legalName;
+  await expect(prizes.getByRole("row", { name: new RegExp(name) }).getByText("Ready to release")).toBeVisible();
+  await prizes.getByRole("button", { name: `Release prize to ${name}` }).click();
+  await expect(prizes.getByRole("row", { name: new RegExp(name) }).getByText("Released")).toBeVisible();
 });
 
 test("Verification lists who still needs an ID: this month's top 3", async ({ page }) => {
   await login(page, "ops@opengrowth.local");
   await page.goto("/ops/verification/needs-id");
   const checks = page.getByRole("region", { name: "Who still needs an ID" });
-  await expect(checks.getByRole("row", { name: /Affiliate 06/ }).getByText("October 1st place: car")).toBeVisible();
-  await expect(checks.getByRole("row", { name: /Affiliate 05/ }).getByText("On hold: flagged")).toBeVisible();
+  // Whoever is top 3 today (the sample data moves through the calendar), each with its place and prize.
+  const month = `${localDay(new Date()).slice(0, 7)}-01`;
+  const top = (await standings(month)).slice(0, 3);
+  expect(top.length).toBeGreaterThan(0);
+  for (const [i, s] of top.entries()) {
+    const row = checks.getByRole("row", { name: new RegExp(s.name) });
+    await expect(row.getByText(`${monthLabel(month).split(" ")[0]} ${["1st", "2nd", "3rd"][i]} place:`, { exact: false })).toBeVisible();
+    const a = await db.affiliate.findUniqueOrThrow({ where: { id: s.affiliateId } });
+    if (a.status === "flagged") await expect(row.getByText("On hold: flagged")).toBeVisible();
+  }
 });
