@@ -60,6 +60,24 @@ docker compose ps              # app should become "healthy" within a minute
 The app applies database migrations every time it starts. Caddy fetches the HTTPS certificate on first visit.
 Open `https://affiliate.opengrowthofficial.com`: you should see the How it works page.
 
+### HTTPS: nginx already on the VPS, or not?
+
+`docker compose up` starts the database, the app and the worker. The app listens on `127.0.0.1:3100`, reachable only from the
+server itself, and something in front of it serves HTTPS:
+
+- **The VPS already runs nginx** (it does on ours: it serves `ladder.opengrowthofficial.com`). Add one site for the app:
+  ```sh
+  sudo cp /opt/opengrowth/deploy/nginx-affiliate.conf /etc/nginx/sites-available/affiliate.opengrowthofficial.com
+  sudo ln -s /etc/nginx/sites-available/affiliate.opengrowthofficial.com /etc/nginx/sites-enabled/
+  sudo nginx -t && sudo systemctl reload nginx
+  sudo certbot --nginx -d affiliate.opengrowthofficial.com      # HTTPS certificate, renewed automatically
+  ```
+  Never stop nginx: the other sites on the VPS go down with it.
+- **Nothing else on ports 80/443**: add `COMPOSE_PROFILES=caddy` to `.env` and run `docker compose up -d`. Caddy then serves
+  HTTPS and gets its own certificate.
+
+If port 3100 is taken on the VPS (`ss -ltn | grep 3100`), set `APP_HOST_PORT` in `.env` to a free port and use it in the nginx file.
+
 ## 6. Create the first accounts
 
 The demo seed is refused in production. Create the first admin from the command line (it prints a one-time password):
