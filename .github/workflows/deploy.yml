@@ -43,10 +43,33 @@ jobs:
             docker-compose.yml
             deploy
       - name: SSH key
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
         run: |
+          missing=""
+          for s in VPS_HOST VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS; do [ -n "${!s}" ] || missing="$missing $s"; done
+          if [ -n "$missing" ]; then echo "::error::Missing repository secrets:$missing (Settings → Secrets and variables → Actions)"; exit 1; fi
           install -m 700 -d ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
-          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null || { echo "::error::VPS_SSH_KEY isn't a valid private key. Paste the whole opengrowth-deploy file (not the .pub), including the BEGIN and END lines."; exit 1; }
+          grep -q "$VPS_HOST" ~/.ssh/known_hosts || { echo "::error::VPS_KNOWN_HOSTS has no entry for $VPS_HOST. Run: ssh-keyscan $VPS_HOST"; exit 1; }
+      - name: Can we reach the VPS?
+        run: |
+          out=$(ssh -i ~/.ssh/id_deploy -o BatchMode=yes -o ConnectTimeout=15 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'test -w /opt/opengrowth && test -f /opt/opengrowth/.env && docker version --format ok' 2>&1) && exit 0
+          echo "$out"
+          case "$out" in
+            *"Permission denied"*) msg="The VPS refused the key: put opengrowth-deploy.pub in /home/${{ secrets.VPS_USER }}/.ssh/authorized_keys" ;;
+            *"Host key verification failed"*|*"REMOTE HOST IDENTIFICATION"*) msg="VPS_KNOWN_HOSTS doesn't match the server. Run ssh-keyscan VPS_IP again and update the secret" ;;
+            *"timed out"*|*"Connection refused"*|*"No route"*) msg="Can't connect to the VPS: check VPS_HOST and that the firewall allows SSH (ufw allow OpenSSH)" ;;
+            *"permission denied while trying to connect to the Docker"*) msg="The deploy user can't use Docker: usermod -aG docker ${{ secrets.VPS_USER }}" ;;
+            *) msg="Connected, but /opt/opengrowth is missing, not writable by ${{ secrets.VPS_USER }}, or has no .env yet (DEPLOY.md steps 3–4)" ;;
+          esac
+          echo "::error::$msg"; exit 1
       - name: Copy the compose file, Caddyfile and scripts
         run: scp -i ~/.ssh/id_deploy docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/opengrowth/ &&
           scp -i ~/.ssh/id_deploy -r deploy ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/opengrowth/
