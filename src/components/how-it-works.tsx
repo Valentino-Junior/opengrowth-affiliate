@@ -108,7 +108,7 @@ export function Rules({ settings: s, center }: Props) {
           Commission comes only from players you referred. One account per person: second accounts are removed and their commission is cancelled.
         </Rule>
         <Rule title="Who can join">Anyone can join with their own unique email and phone number. Sign up here, or ask your Young Money rep.</Rule>
-        <Rule title="ID check on big payouts" className="md:col-span-2 lg:col-span-3">
+        <Rule title="ID check on big payouts" className="md:col-span-2 md:items-center md:text-center lg:col-span-3">
           Payouts over {idOver} need a quick ID check before we send. The name on your ID must match your account.
         </Rule>
       </div>
