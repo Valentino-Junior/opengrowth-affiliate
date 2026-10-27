@@ -1,8 +1,6 @@
-import { NextResponse } from "next/server";
-
 // Affiliate referral link: /r/OG-A01 → player signup with the code filled in.
-export function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
-  return params.then(({ code }) =>
-    NextResponse.redirect(new URL(`/join/player?ref=${encodeURIComponent(code.toUpperCase())}`, request.url)),
-  );
+// The redirect is relative: behind nginx the app only sees its internal address (0.0.0.0:3000), never the public one.
+export async function GET(_request: Request, { params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params;
+  return new Response(null, { status: 307, headers: { Location: `/join/player?ref=${encodeURIComponent(code.toUpperCase())}` } });
 }
