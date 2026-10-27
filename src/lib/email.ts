@@ -1,15 +1,47 @@
-// Outgoing email.
-//   RESEND_API_KEY set → sent through Resend (https://resend.com) from EMAIL_FROM.
-//   not set            → not sent; printed to the server console and kept in the dev mailbox (/dev/mailbox).
+// Outgoing email, from EMAIL_FROM.
+//   SMTP_HOST set      → sent through that mail server (e.g. the Hostinger mailbox affiliate@opengrowthofficial.com).
+//   RESEND_API_KEY set → sent through Resend (https://resend.com).
+//   neither            → not sent; printed to the server console and kept in the dev mailbox (/dev/mailbox).
 // Sending never throws: a failed email must not undo a signup or an approval. Every attempt is recorded.
 
+import nodemailer, { type Transporter } from "nodemailer";
 import { db } from "./db";
 
 export type EmailKind = "email_code" | "password_code" | "approved" | "declined" | "welcome";
 
 const FROM = process.env.EMAIL_FROM || "Opengrowth <no-reply@opengrowth.local>";
 
-export const emailConfigured = () => !!process.env.RESEND_API_KEY;
+export const emailConfigured = () => !!(process.env.SMTP_HOST || process.env.RESEND_API_KEY);
+
+let smtp: Transporter | null = null;
+function smtpTransport() {
+  const port = Number(process.env.SMTP_PORT) || 465;
+  smtp ??= nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: port === 465, // 465 = SSL from the start; 587 = STARTTLS
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 10_000,
+  });
+  return smtp;
+}
+
+/** Sends one message; returns the provider's message id. */
+async function deliver(msg: { to: string; subject: string; text: string }): Promise<string | null> {
+  if (process.env.SMTP_HOST) {
+    const info = await smtpTransport().sendMail({ from: FROM, to: msg.to, subject: msg.subject, text: msg.text, html: html(msg.text) });
+    return info.messageId ?? null;
+  }
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: FROM, to: [msg.to], subject: msg.subject, text: msg.text, html: html(msg.text) }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+  if (!res.ok) throw new Error(data.message || `Resend answered ${res.status}`);
+  return data.id ?? null;
+}
 
 /** Absolute link for emails (they're read outside the app, so relative paths don't work). */
 export function appLink(path: string): string {
@@ -32,21 +64,14 @@ function html(text: string): string {
 
 export async function sendEmail(msg: { to: string; subject: string; text: string; kind: EmailKind }): Promise<{ ok: boolean }> {
   if (!emailConfigured()) {
-    console.log(`[email] (not sent: no RESEND_API_KEY) to=${msg.to} subject="${msg.subject}"\n${msg.text}\n`);
+    console.log(`[email] (not sent: no SMTP_HOST or RESEND_API_KEY) to=${msg.to} subject="${msg.subject}"\n${msg.text}\n`);
     await db.emailMessage.create({ data: { to: msg.to, kind: msg.kind, subject: msg.subject, status: "logged", body: msg.text } }).catch(() => {});
     return { ok: true };
   }
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to: [msg.to], subject: msg.subject, text: msg.text, html: html(msg.text) }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
-    if (!res.ok) throw new Error(data.message || `Resend answered ${res.status}`);
-    await db.emailMessage.create({ data: { to: msg.to, kind: msg.kind, subject: msg.subject, status: "sent", providerId: data.id ?? null } });
+    const providerId = await deliver(msg);
+    await db.emailMessage.create({ data: { to: msg.to, kind: msg.kind, subject: msg.subject, status: "sent", providerId } });
     return { ok: true };
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
