@@ -43,7 +43,7 @@ export default async function HomePage() {
               <Link href="/login" className="px-2 py-2 text-sm font-semibold text-ink no-underline hover:text-gold">
                 Log in
               </Link>
-              <Link href="/join" className="hidden rounded-full bg-gold px-4 py-2 text-sm font-bold text-bg no-underline hover:brightness-110 sm:inline-flex">
+              <Link href="/join" className="inline-flex rounded-full bg-gold px-4 py-2 text-sm font-bold text-bg no-underline hover:brightness-110">
                 Join
               </Link>
             </div>
@@ -78,6 +78,12 @@ export default async function HomePage() {
             </a>
           </div>
           <p className="m-0 text-sm text-muted">Free to join · Paid every Monday · Your players stay yours</p>
+          {/* Only when admin has set the group chat link (Settings). */}
+          {s.groupChatUrl ? (
+            <a href={s.groupChatUrl} target="_blank" rel="noreferrer" className="-mt-3 text-sm font-semibold text-gold">
+              Questions? Message the team →
+            </a>
+          ) : null}
         </div>
 
         {/* The math, worked through with real numbers. */}
@@ -128,33 +134,6 @@ export default async function HomePage() {
         <Race settings={s} center />
         <Rules settings={s} center />
         <Badges settings={s} center />
-
-        <section
-          id="join"
-          aria-label="Join"
-          className="relative flex flex-col items-center gap-5 overflow-hidden rounded-[22px] border border-line-gold bg-surface-gold px-6 py-14 text-center sm:px-10"
-        >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_50%_0%,rgba(212,175,90,0.14),transparent)]"
-          />
-          <span className="relative text-xs font-bold tracking-[3px] text-gold">BUILT DIFFERENT</span>
-          <h2 className="relative m-0 font-serif text-4xl font-medium sm:text-5xl">Ready to build?</h2>
-          <p className="relative m-0 max-w-xl text-muted">
-            {s.groupChatUrl ? "Create your account now, or message your Young Money rep in the group chat." : "Create your account now. It takes two minutes."}
-          </p>
-          <div className="relative flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-            <Link href="/join" className={primary}>
-              Become an affiliate
-            </Link>
-            {/* Only when admin has set the group chat link (Settings); otherwise it would just repeat the button above. */}
-            {s.groupChatUrl ? (
-              <a href={s.groupChatUrl} className={secondary} target="_blank" rel="noreferrer">
-                Message the team
-              </a>
-            ) : null}
-          </div>
-        </section>
       </main>
     </>
   );
