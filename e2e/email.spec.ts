@@ -26,7 +26,7 @@ test("signing up asks for the emailed 6-digit code", async ({ page }) => {
 
   await expect(page).toHaveURL("/verify-email");
   await expect(page.getByText(`We sent a 6-digit code to ${email}`)).toBeVisible();
-  expect((await latestEmail(email))?.subject).toMatch(/^\d{6} is your Opengrowth code$/);
+  expect((await latestEmail(email))?.subject).toBe("Opengrowth email confirmation code");
 
   // Asking again straight away is refused.
   await page.getByRole("button", { name: "send a new code" }).click();

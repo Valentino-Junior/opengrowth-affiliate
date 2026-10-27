@@ -52,11 +52,19 @@ function html(text: string): string {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const body = esc(text)
     .split(/\n{2,}/)
-    .map((p) => `<p style="margin:0 0 16px;line-height:1.5">${p.replace(/\n/g, "<br>")}</p>`)
+    .map((p) =>
+      // A 6-digit code on its own line gets a large, centred box of its own.
+      /^\d{6}$/.test(p.trim())
+        ? `<div style="margin:8px 0 24px;text-align:center"><span style="display:inline-block;padding:14px 28px;border:1px solid #d4af5a;border-radius:12px;background:#1d1a12;color:#d4af5a;font-size:34px;font-weight:bold;letter-spacing:10px;font-family:'Courier New',Courier,monospace">${p.trim()}</span></div>`
+        : `<p style="margin:0 0 16px;line-height:1.5">${p.replace(/\n/g, "<br>")}</p>`,
+    )
     .join("");
   return `<div style="background:#0a0a0b;padding:32px 16px;font-family:Arial,Helvetica,sans-serif">
   <div style="max-width:520px;margin:0 auto;background:#141416;border:1px solid #26262a;border-radius:14px;padding:28px;color:#f2f0ea">
-    <div style="color:#d4af5a;font-weight:bold;letter-spacing:3px;font-size:13px;margin-bottom:20px">OPENGROWTH · BY YOUNG MONEY</div>
+    <div style="text-align:center;margin-bottom:24px">
+      <img src="${appLink("/icon.png")}" width="56" height="56" alt="OG" style="display:inline-block;border-radius:50%;border:0">
+      <div style="margin-top:10px;color:#d4af5a;font-weight:bold;letter-spacing:3px;font-size:13px">OPENGROWTH · BY YOUNG MONEY</div>
+    </div>
     ${body}
   </div>
 </div>`;
@@ -87,7 +95,7 @@ export function emailCodeMessage(to: string, code: string) {
   return sendEmail({
     to,
     kind: "email_code",
-    subject: `${code} is your Opengrowth code`,
+    subject: "Opengrowth email confirmation code",
     text: `Your code to confirm this email address is:\n\n${code}\n\nIt works for 15 minutes. If you didn't sign up for Opengrowth, you can ignore this email.`,
   });
 }
@@ -96,7 +104,7 @@ export function passwordCodeMessage(to: string, code: string) {
   return sendEmail({
     to,
     kind: "password_code",
-    subject: `${code} is your Opengrowth password reset code`,
+    subject: "Opengrowth password reset code",
     text: `Someone asked to reset the password for this Opengrowth account. Your code is:\n\n${code}\n\nIt works for 15 minutes. If it wasn't you, ignore this email: your password stays the same.`,
   });
 }

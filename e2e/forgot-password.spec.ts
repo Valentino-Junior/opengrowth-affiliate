@@ -33,7 +33,7 @@ test("reset with the emailed code, then only the new password works", async ({ p
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Send code" }).click();
   await expect(page.getByText(`If ${email} has an account`)).toBeVisible();
-  expect((await latestEmail(email))?.subject).toMatch(/^\d{6} is your Opengrowth password reset code$/);
+  expect((await latestEmail(email))?.subject).toBe("Opengrowth password reset code");
   const code = await latestCode(email);
 
   await page.getByLabel("6-digit code").fill(code === "000000" ? "111111" : "000000");
