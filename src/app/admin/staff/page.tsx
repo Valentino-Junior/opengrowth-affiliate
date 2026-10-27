@@ -42,10 +42,9 @@ export default async function StaffPage() {
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Name" name="name" required />
-              <Field label="Code" name="code" placeholder="A4" maxLength={4} required hint="Shows next to entries they log, like A1." />
+              <Field label="Code" name="code" placeholder="A4" maxLength={4} required hint="Their short tag on every entry they log or verify, like A1. Must be unique." />
               <Field label="Email" name="email" type="email" required />
               <Field label="Phone number" name="phone" type="tel" required />
-              <Field label="Team" name="team" placeholder="Team A" defaultValue="Management" required />
             </div>
             <div>
               <SubmitButton pendingText="Creating…">Create login</SubmitButton>
@@ -62,7 +61,6 @@ export default async function StaffPage() {
               <Th>Code</Th>
               <Th>Role</Th>
               <Th>Email</Th>
-              <Th>Team</Th>
               <Th>Status</Th>
               <Th>Actions</Th>
             </tr>
@@ -83,7 +81,6 @@ export default async function StaffPage() {
                     <Pill tone={ROLE_TONE[u.role as keyof typeof ROLE_TONE]}>{ROLE_LABEL[u.role]}</Pill>
                   </Td>
                   <Td>{u.email}</Td>
-                  <Td className="whitespace-nowrap">{u.staff?.team ?? "—"}</Td>
                   <Td>{active ? <Pill tone="green">Active</Pill> : <Pill tone="grey">Turned off</Pill>}</Td>
                   <Td>
                     <div className="flex flex-wrap items-start gap-2">

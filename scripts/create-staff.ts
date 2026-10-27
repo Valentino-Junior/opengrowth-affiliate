@@ -1,7 +1,7 @@
 // Creates a staff login on a fresh (production) database, where the dev seed is not allowed.
 //
 //   npm run create-staff -- --role admin --email owner@example.com --phone "555-123-4567" --name "Owner" --code AD
-//   npm run create-staff -- --role employee --email a1@example.com --phone "555-123-0001" --name "Jordan" --code A1 --team "Team A"
+//   npm run create-staff -- --role employee --email a1@example.com --phone "555-123-0001" --name "Jordan" --code A1
 //
 // Prints a one-time password unless STAFF_PASSWORD is set. Only the first admin needs this; the admin adds everyone else under Staff.
 
@@ -19,14 +19,13 @@ const { values } = parseArgs({
     phone: { type: "string" },
     name: { type: "string" },
     code: { type: "string" },
-    team: { type: "string", default: "Management" },
   },
 });
 
 async function main() {
-  const { role, email, phone, name, code, team } = values;
+  const { role, email, phone, name, code } = values;
   if (!role || !["admin", "ops", "employee"].includes(role) || !email || !phone || !name || !code) {
-    console.error('Usage: npm run create-staff -- --role admin|ops|employee --email X --phone X --name "X" --code XX [--team "Team A"]');
+    console.error('Usage: npm run create-staff -- --role admin|ops|employee --email X --phone X --name "X" --code XX');
     process.exit(1);
   }
   const db = new PrismaClient();
@@ -39,7 +38,7 @@ async function main() {
       role: role as "admin" | "ops" | "employee",
       emailVerifiedAt: new Date(),
       phoneVerifiedAt: new Date(),
-      staff: { create: { displayName: name, displayCode: code.toUpperCase(), team: team! } },
+      staff: { create: { displayName: name, displayCode: code.toUpperCase(), team: role === "employee" ? "Desk" : "Management" } },
     },
   });
   // First run: store the default business settings so they show in /admin/settings.

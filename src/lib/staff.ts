@@ -10,10 +10,13 @@ import { RuleError } from "./errors";
 export type StaffRole = Extract<Role, "employee" | "ops" | "admin">;
 export const STAFF_ROLES: StaffRole[] = ["employee", "ops", "admin"];
 
+/** The team shown on a staff member's profile and desk card follows from their role. */
+export const teamFor = (role: StaffRole) => (role === "employee" ? "Desk" : "Management");
+
 const tempPassword = () => randomBytes(6).toString("base64url");
 
 export async function createStaff(
-  input: { role: StaffRole; name: string; email: string; phone: string; code: string; team: string },
+  input: { role: StaffRole; name: string; email: string; phone: string; code: string },
   actorId: string,
 ) {
   const email = normalizeEmail(input.email);
@@ -32,7 +35,7 @@ export async function createStaff(
       passwordHash: await hashPassword(password),
       emailVerifiedAt: new Date(),
       phoneVerifiedAt: new Date(),
-      staff: { create: { displayName: input.name, displayCode: code, team: input.team } },
+      staff: { create: { displayName: input.name, displayCode: code, team: teamFor(input.role) } },
     },
   });
   await db.auditLog.create({ data: { actorId, action: "staff.create", entity: "user", entityId: user.id, after: { email, role: input.role, code } } });

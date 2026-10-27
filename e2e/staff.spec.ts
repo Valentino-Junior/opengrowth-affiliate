@@ -18,7 +18,6 @@ test("admin adds a desk employee, who logs in with the temporary password", asyn
   await form.getByLabel("Code").fill("a4");
   await form.getByLabel("Email", { exact: true }).fill("a4@opengrowth.local");
   await form.getByLabel("Phone number").fill("555-000-0044");
-  await form.getByLabel("Team").fill("Team A");
   await form.getByRole("button", { name: "Create login" }).click();
   await expect(form.getByText("Taylor Desk can log in as desk employee.", { exact: false })).toBeVisible();
   temp = await form.locator("dd").nth(1).innerText();

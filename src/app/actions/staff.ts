@@ -15,7 +15,6 @@ const staffSchema = z.object({
   email: z.string().email("Enter a valid email"),
   phone: z.string().refine((v) => v.replace(/\D/g, "").length >= 10, "Enter a full phone number"),
   code: z.string().regex(/^[A-Za-z0-9]{2,4}$/, "The code is 2 to 4 letters or numbers, like A4"),
-  team: z.string().min(1, "Enter a team"),
 });
 
 export async function createStaffAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -26,7 +25,6 @@ export async function createStaffAction(_prev: ActionState, form: FormData): Pro
     email: str(form, "email"),
     phone: str(form, "phone"),
     code: str(form, "code"),
-    team: str(form, "team") || "Management",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
