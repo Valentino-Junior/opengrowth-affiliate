@@ -100,12 +100,21 @@ crontab -e
 15 3 * * * /opt/opengrowth/deploy/backup.sh >> /var/log/opengrowth-backup.log 2>&1
 ```
 
-Backups land in `/var/backups/opengrowth` (30 days kept). Keep a copy off the server: set `BACKUP_S3_URI`
-(and install the AWS CLI), or download them regularly. **Restore** a backup:
+Run it once by hand to check it works: `/opt/opengrowth/deploy/backup.sh`.
+
+Backups land in `/var/backups/opengrowth`: a dated database copy each night (30 days kept), and `uploads/`, a copy of
+every payment screenshot and ID photo (skipped once uploads are in S3, which keeps its own copies).
+
+These sit on the same disk as the app, so also keep a copy **off the server**: turn on Hostinger's VPS backups
+(hPanel → VPS → Backups), and/or set `BACKUP_S3_URI` (with the AWS CLI installed) to copy each backup to S3.
+
+**Restore** the database:
 
 ```sh
 gunzip -c /var/backups/opengrowth/opengrowth-2026-10-19-0315.sql.gz | docker compose exec -T db psql -U opengrowth -d opengrowth
 ```
+
+**Restore** the uploads: `docker compose cp /var/backups/opengrowth/uploads/. app:/app/storage/`
 
 ## 8. Switch uploads to S3 (when the bucket is ready)
 
