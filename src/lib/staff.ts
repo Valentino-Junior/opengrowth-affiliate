@@ -13,6 +13,24 @@ export const STAFF_ROLES: StaffRole[] = ["employee", "ops", "admin"];
 /** The team shown on a staff member's profile and desk card follows from their role. */
 export const teamFor = (role: StaffRole) => (role === "employee" ? "Desk" : "Management");
 
+const CODE_PREFIX: Record<StaffRole, string> = { employee: "A", ops: "OP", admin: "AD" };
+
+/** The next free code for a role: A1, A2… for the desk; OP, OP2… for ops; AD, AD2… for admins. */
+export function nextCode(role: StaffRole, taken: Iterable<string>): string {
+  const used = new Set(taken);
+  const prefix = CODE_PREFIX[role];
+  for (let n = 1; ; n++) {
+    const code = n === 1 && role !== "employee" ? prefix : `${prefix}${n}`;
+    if (!used.has(code)) return code;
+  }
+}
+
+/** Suggested codes for the Add staff form, one per role. */
+export async function suggestedCodes(): Promise<Record<StaffRole, string>> {
+  const taken = (await db.staff.findMany({ select: { displayCode: true } })).map((s) => s.displayCode);
+  return { employee: nextCode("employee", taken), ops: nextCode("ops", taken), admin: nextCode("admin", taken) };
+}
+
 const tempPassword = () => randomBytes(6).toString("base64url");
 
 export async function createStaff(
@@ -21,7 +39,8 @@ export async function createStaff(
 ) {
   const email = normalizeEmail(input.email);
   const phone = normalizePhone(input.phone);
-  const code = input.code.toUpperCase();
+  // No code given: the next free one for the role.
+  const code = input.code ? input.code.toUpperCase() : (await suggestedCodes())[input.role];
   if (await db.user.findUnique({ where: { email } })) throw new RuleError("This email already has a login.");
   if (await db.user.findUnique({ where: { phone } })) throw new RuleError("This phone number already has a login.");
   if (await db.staff.findUnique({ where: { displayCode: code } })) throw new RuleError(`The code ${code} is taken. Pick another.`);

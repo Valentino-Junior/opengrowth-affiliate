@@ -2,14 +2,13 @@ import { createStaffAction, resetStaffPasswordAction, setStaffActiveAction } fro
 import { AREA_ROLES, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ROLE_LABEL } from "@/lib/labels";
-import { STAFF_ROLES } from "@/lib/staff";
+import { STAFF_ROLES, suggestedCodes } from "@/lib/staff";
 import { ActionForm } from "@/components/action-form";
 import { ModalButton } from "@/components/modal-button";
-import { Field } from "@/components/field";
-import { Select } from "@/components/select";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, PageTitle, Pill } from "@/components/ui";
 import { EmptyRow, Table, Td, Th } from "@/components/table";
+import { StaffFields } from "./staff-fields";
 
 export const metadata = { title: "Staff · Opengrowth" };
 
@@ -17,6 +16,7 @@ const ROLE_TONE = { employee: "blue", ops: "gold", admin: "green" } as const;
 
 export default async function StaffPage() {
   const me = await requireRole(AREA_ROLES.admin);
+  const suggested = await suggestedCodes();
   const staff = await db.user.findMany({
     where: { role: { in: STAFF_ROLES } },
     include: { staff: true },
@@ -29,23 +29,7 @@ export default async function StaffPage() {
         <PageTitle eyebrow="ADMIN" title="Staff" lead="Everyone who logs in to the desk or ops. Turning someone off logs them out straight away." />
         <ModalButton label="Add staff" title="Add a staff login" description="They get a temporary password to change on their profile.">
           <ActionForm action={createStaffAction} resetOnSuccess className="flex flex-col gap-4">
-            <Select
-              label="Role"
-              name="role"
-              required
-              placeholder="Choose a role"
-              options={[
-                { value: "employee", label: "Desk employee: adds players, logs and verifies money" },
-                { value: "ops", label: "Ops manager: payouts, IDs, flags, affiliates" },
-                { value: "admin", label: "Admin: all ops work, plus Staff and Settings" },
-              ]}
-            />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Name" name="name" required />
-              <Field label="Code" name="code" placeholder="A4" maxLength={4} required hint="Their short tag on every entry they log or verify, like A1. Must be unique." />
-              <Field label="Email" name="email" type="email" required />
-              <Field label="Phone number" name="phone" type="tel" required />
-            </div>
+            <StaffFields suggested={suggested} />
             <div>
               <SubmitButton pendingText="Creating…">Create login</SubmitButton>
             </div>

@@ -13,9 +13,12 @@ test("admin adds a desk employee, who logs in with the temporary password", asyn
   await expect(page).toHaveURL("/admin/staff");
   await page.getByRole("button", { name: "Add staff" }).click();
   const form = page.getByRole("dialog", { name: "Add a staff login" });
+  // Picking a role fills in the next free code (the sample desk is A1–A3, ops is OP).
+  await form.getByLabel("Role").selectOption("ops");
+  await expect(form.getByLabel("Code")).toHaveValue("OP2");
   await form.getByLabel("Role").selectOption("employee");
+  await expect(form.getByLabel("Code")).toHaveValue("A4");
   await form.getByLabel("Name").fill("Taylor Desk");
-  await form.getByLabel("Code").fill("a4");
   await form.getByLabel("Email", { exact: true }).fill("a4@opengrowth.local");
   await form.getByLabel("Phone number").fill("555-000-0044");
   await form.getByRole("button", { name: "Create login" }).click();
@@ -24,9 +27,10 @@ test("admin adds a desk employee, who logs in with the temporary password", asyn
   await page.keyboard.press("Escape");
   await expect(page.getByRole("row", { name: /Taylor Desk/ }).getByText("A4", { exact: true })).toBeVisible();
 
-  // The code must be free.
+  // The next suggestion moves on; a code typed by hand must still be free.
   await page.getByRole("button", { name: "Add staff" }).click();
   await form.getByLabel("Role").selectOption("employee");
+  await expect(form.getByLabel("Code")).toHaveValue("A5");
   await form.getByLabel("Name").fill("Someone Else");
   await form.getByLabel("Code").fill("A4");
   await form.getByLabel("Email", { exact: true }).fill("other@opengrowth.local");
