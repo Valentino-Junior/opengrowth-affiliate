@@ -16,7 +16,6 @@ const secondary =
 export default async function HomePage() {
   const [s, user] = await Promise.all([getSettings(), getCurrentUser()]);
   const rate = formatRate(s.commissionRateBp);
-  const chat = s.groupChatUrl || "/join";
   const e = example(s);
 
   return (
@@ -141,14 +140,19 @@ export default async function HomePage() {
           />
           <span className="relative text-xs font-bold tracking-[3px] text-gold">BUILT DIFFERENT</span>
           <h2 className="relative m-0 font-serif text-4xl font-medium sm:text-5xl">Ready to build?</h2>
-          <p className="relative m-0 max-w-xl text-muted">Create your account now, or message your Young Money rep in the group chat.</p>
+          <p className="relative m-0 max-w-xl text-muted">
+            {s.groupChatUrl ? "Create your account now, or message your Young Money rep in the group chat." : "Create your account now. It takes two minutes."}
+          </p>
           <div className="relative flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
             <Link href="/join" className={primary}>
               Become an affiliate
             </Link>
-            <a href={chat} className={secondary} {...(s.groupChatUrl ? { target: "_blank", rel: "noreferrer" } : {})}>
-              Message the team
-            </a>
+            {/* Only when admin has set the group chat link (Settings); otherwise it would just repeat the button above. */}
+            {s.groupChatUrl ? (
+              <a href={s.groupChatUrl} className={secondary} target="_blank" rel="noreferrer">
+                Message the team
+              </a>
+            ) : null}
           </div>
         </section>
       </main>
